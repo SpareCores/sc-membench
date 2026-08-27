@@ -32,7 +32,8 @@ OPENMP_FLAG = -fopenmp
 # Source Files and Targets
 # =============================================================================
 
-SRC = membench.c
+SRCS = $(wildcard *.c)
+HDRS = $(wildcard *.h)
 TARGET = membench
 TARGET_BASIC = membench-basic
 TARGET_HWLOC = membench-hwloc
@@ -101,13 +102,15 @@ else
         # Other architectures: use generic optimization
         CFLAGS_ARCH = -mtune=generic
     endif
+    # glibc hides POSIX/GNU APIs (sched_setaffinity, clock_gettime, getopt, ...) under -std=c11
+    CFLAGS_OS = -D_GNU_SOURCE
     CFLAGS_PATHS =
     LDFLAGS_PATHS =
     LDFLAGS_BASE = -lm
     OPENMP_LIBS =
 endif
 
-CFLAGS = $(CFLAGS_BASE) $(CFLAGS_ARCH) $(CFLAGS_PATHS) $(OPENMP_FLAG)
+CFLAGS = $(CFLAGS_BASE) $(CFLAGS_ARCH) $(CFLAGS_OS) $(CFLAGS_PATHS) $(OPENMP_FLAG)
 LDFLAGS = $(OPENMP_FLAG) $(LDFLAGS_BASE) $(LDFLAGS_PATHS) $(OPENMP_LIBS)
 
 # =============================================================================
@@ -164,7 +167,7 @@ endif
 # Default: auto-detect and build universal binary
 default: $(TARGET)
 
-$(TARGET): $(SRC)
+$(TARGET): $(SRCS) $(HDRS)
 	@echo "Building universal binary for $(UNAME_S) $(ARCH)..."
 	@echo "  Compiler: $(CC)"
 	@echo "  Optimization: $(CFLAGS_ARCH) (universal compatibility)"
@@ -172,20 +175,20 @@ $(TARGET): $(SRC)
 	@echo "  hwloc:    $(HAVE_HWLOC)"
 	@echo "  numa:     $(HAVE_NUMA)"
 	@echo "  hugetlbfs: $(HAVE_HUGETLBFS)"
-	$(CC) $(CFLAGS) $(DETECTED_DEFS) -o $@ $< $(LDFLAGS) $(DETECTED_LIBS)
+	$(CC) $(CFLAGS) $(DETECTED_DEFS) -o $@ $(SRCS) $(LDFLAGS) $(DETECTED_LIBS)
 
 # Basic: minimal build, no optional dependencies
 basic: $(TARGET_BASIC)
 
-$(TARGET_BASIC): $(SRC)
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
+$(TARGET_BASIC): $(SRCS) $(HDRS)
+	$(CC) $(CFLAGS) -o $@ $(SRCS) $(LDFLAGS)
 
 # Build with hwloc support (portable cache/topology detection)
 hwloc: $(TARGET_HWLOC)
 
-$(TARGET_HWLOC): $(SRC)
+$(TARGET_HWLOC): $(SRCS) $(HDRS)
 ifeq ($(HAVE_HWLOC),yes)
-	$(CC) $(CFLAGS) -DUSE_HWLOC -o $@ $< $(LDFLAGS) -lhwloc
+	$(CC) $(CFLAGS) -DUSE_HWLOC -o $@ $(SRCS) $(LDFLAGS) -lhwloc
 else
 	@echo "Error: hwloc 2.x not found. Install with:"
 	@echo "  Linux:  apt install libhwloc-dev  (or: yum install hwloc-devel)"
@@ -197,10 +200,10 @@ endif
 # Build with NUMA support (Linux only)
 numa: $(TARGET_NUMA)
 
-$(TARGET_NUMA): $(SRC)
+$(TARGET_NUMA): $(SRCS) $(HDRS)
 ifeq ($(UNAME_S),Linux)
 ifeq ($(HAVE_NUMA),yes)
-	$(CC) $(CFLAGS) -DUSE_NUMA -o $@ $< $(LDFLAGS) -lnuma
+	$(CC) $(CFLAGS) -DUSE_NUMA -o $@ $(SRCS) $(LDFLAGS) -lnuma
 else
 	@echo "Error: libnuma not found. Install with:"
 	@echo "  apt install libnuma-dev  (or: yum install numactl-devel)"
@@ -214,13 +217,13 @@ endif
 # Build with all features (recommended for production Linux servers)
 full: $(TARGET_FULL)
 
-$(TARGET_FULL): $(SRC)
+$(TARGET_FULL): $(SRCS) $(HDRS)
 ifeq ($(UNAME_S),Linux)
 	$(CC) $(CFLAGS) -DUSE_HWLOC -DUSE_NUMA $(if $(filter yes,$(HAVE_HUGETLBFS)),-DHAVE_HUGETLBFS) \
-		-o $@ $< $(LDFLAGS) -lhwloc -lnuma $(if $(filter yes,$(HAVE_HUGETLBFS)),-lhugetlbfs)
+		-o $@ $(SRCS) $(LDFLAGS) -lhwloc -lnuma $(if $(filter yes,$(HAVE_HUGETLBFS)),-lhugetlbfs)
 else
 	@echo "Note: Building without NUMA (not available on $(UNAME_S))"
-	$(CC) $(CFLAGS) -DUSE_HWLOC -o $@ $< $(LDFLAGS) -lhwloc
+	$(CC) $(CFLAGS) -DUSE_HWLOC -o $@ $(SRCS) $(LDFLAGS) -lhwloc
 endif
 
 # Build all versions that can be built on this platform
