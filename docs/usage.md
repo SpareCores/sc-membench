@@ -1,0 +1,399 @@
+# Usage
+
+## Running via Docker
+
+With no arguments, the image sweeps the default sizes with all four operations
+on all CPUs, and prints CSV to stdout:
+
+```bash
+docker run --rm --privileged ghcr.io/sparecores/membench:main
+```
+
+The container entrypoint is
+`resource-tracker -- nice -n -20 /usr/local/bin/membench`
+([`Dockerfile`](../Dockerfile)), so arguments after the image name go to
+`membench`. The `--privileged` option is required, because raising the
+priority with `nice -n -20` needs `CAP_SYS_NICE`.
+
+The following commands show the common variations:
+
+```bash
+# Log the detected system to stderr, and stop after about 5 minutes
+docker run --rm --privileged ghcr.io/sparecores/membench:main -v -t 300
+
+# Test one per-thread buffer size of 1,024 KiB
+docker run --rm --privileged ghcr.io/sparecores/membench:main -s 1024
+
+# Use huge pages, with a log on stderr
+docker run --rm --privileged ghcr.io/sparecores/membench:main -H -v
+
+# Run only the latency test, with huge pages
+docker run --rm --privileged ghcr.io/sparecores/membench:main -H -o latency
+
+# Save the CSV to a file
+docker run --rm --privileged ghcr.io/sparecores/membench:main -H > results.csv
+
+# Keep the CSV and the log in separate files
+docker run --rm --privileged ghcr.io/sparecores/membench:main -Hv > results.csv 2> membench.log
+
+# Print the version of the tool
+docker run --rm --privileged ghcr.io/sparecores/membench:main -V
+```
+
+The image is published for `linux/amd64` and `linux/arm64` and rebuilt on
+every push to the `main` branch of the
+[`sc-membench` repository](https://github.com/SpareCores/sc-membench). Use the
+`:main` tag; `:latest` points to the same build. A published GitHub release
+also pushes a tag with the release version, but no release has been published
+since the image build was added, so no version tag exists yet. The `:main`
+image runs version 1.2.2 of the code, which `-V` prints.
+
+Without `-v`, a run prints nothing to stderr. With `-v`, the log looks as
+follows on an AWS (Amazon Web Services) `m7i.48xlarge` server
+([recorded log](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/m7i.48xlarge/0/membench/stderr)):
+
+```text
+System: 192 CPUs, 743.94 GB memory
+Note: 2 L3 caches detected (distributed across dies)
+Cache (hwloc): L1d=48KB, L2=2048KB, L3=107520KB (per core)
+Minimum total test size: 3072 KB (16KB × 192 CPUs)
+NUMA: 2 nodes detected (libnuma enabled)
+NUMA topology:
+  Node 0: 96 CPUs (first: 0, last: 143)
+  Node 1: 96 CPUs (first: 48, last: 191)
+Testing 10 buffer sizes (per thread, adaptive to cache hierarchy)
+Thread mode: num_cpus (192 threads)
+OpenMP: proc_bind(spread) for NUMA-aware thread placement
+Total runtime: 350.7 seconds
+```
+
+Note that the L3 size on the `Cache` line is the size of one shared L3 cache,
+although the line labels all three sizes "(per core)", and that the "Minimum
+total test size" is printed but not used. See
+[Cache Detection](./workloads.md#cache-detection) for what the sizes mean.
+
+## Running Without Docker
+
+Install `membench` from a distribution package, or build it from source:
+
+- **Package:** sc-membench is packaged in some distributions; see
+  [Packages](./build.md#packages) for the packaging status.
+- **Source:** see [Building from Source](./build.md) for the dependencies per
+  platform and the build targets. In short, on Debian or Ubuntu:
+
+  ```bash
+  sudo apt-get install libhugetlbfs-dev libhwloc-dev libnuma-dev
+  make full
+  ./membench-full -v
+  ```
+
+The binary takes the same options as the image. Run it as follows:
+
+```bash
+# Run with the default settings: all CPUs, sizes derived from the caches
+./membench
+
+# Log to stderr, and stop after about 5 minutes (300 seconds)
+./membench -v -t 300
+
+# Test one per-thread buffer size of 1,024 KiB (1 MiB)
+./membench -s 1024
+
+# Run the binary built with `make numa`, with a log
+./membench-numa -v
+```
+
+Outside the container, the run has no `nice -n -20` priority and no
+`resource-tracker`.
+
+## Usage Examples
+
+The following commands use the native binary; with the image, put the same
+options after the image name, as in [Running via Docker](#running-via-docker).
+See [Options](#options) for every option and its default.
+
+```bash
+# Use huge pages for large buffers; recommended for benchmarking
+./membench -H
+
+# The same, with a log that shows the detected system and the runtime
+./membench -H -v
+
+# Print a human-readable table, a summary, and scores instead of CSV
+./membench -R
+
+# Run each bandwidth measurement 5 times instead of 3, and keep the best
+./membench -r 5
+
+# Run each bandwidth measurement once: the fastest run
+./membench -r 1
+
+# Use exactly 16 threads for the bandwidth operations
+./membench -p 16
+
+# Try 1, 2, 4, and so on up to the CPU count, and keep the best per size
+./membench -a
+
+# Extend the sweep with 512 MiB, 1 GiB, and larger sizes up to the memory limit
+./membench -f
+
+# Run only the read and latency operations
+./membench -o read -o latency
+
+# Restrict the OpenMP places that threads can be bound to, to cores
+OMP_PLACES=cores ./membench
+```
+
+`OMP_PROC_BIND` and `OMP_NUM_THREADS` do not change the bandwidth operations;
+see [Environment Variables](#environment-variables).
+
+## Explicit Huge Pages
+
+With `-H`, a buffer of at least twice the huge page size first tries explicit
+huge pages, then THP (Transparent Huge Pages), then regular pages; see
+[Huge Pages](./workloads.md#huge-pages). THP needs no root access and no
+setup. Explicit huge pages come from a pool that must be pre-allocated, and
+when that pool runs out, the buffer falls back to THP.
+
+To pre-allocate explicit huge pages, as root:
+
+```bash
+# Check current huge page status
+grep Huge /proc/meminfo
+
+# Calculate huge pages needed for BANDWIDTH tests (read/write/copy):
+#   threads × buffer_size × 2 (for copy: src+dst) / 2MB
+#
+# Examples:
+#   8 CPUs,  256 MiB buffer:   8 × 256 × 2 / 2 =  2,048 pages (4 GB)
+#   64 CPUs, 256 MiB buffer:  64 × 256 × 2 / 2 = 16,384 pages (32 GB)
+#  192 CPUs, 256 MiB buffer: 192 × 256 × 2 / 2 = 49,152 pages (96 GB)
+#
+# LATENCY tests run single-threaded, so need much less:
+#   256 MiB buffer: 256 / 2 = 128 pages (256 MB)
+
+# Allocate huge pages (requires root) - adjust for your system
+echo 49152 | sudo tee /proc/sys/vm/nr_hugepages
+
+# Run with huge pages (will use explicit huge pages if available)
+./membench -H -v
+```
+
+The bandwidth sizing applies only to a binary built without `libnuma`. With
+`libnuma`, as in the image and in `make numa` and `make full` builds,
+multi-thread bandwidth buffers never use huge pages, so only the latency
+sizing applies; see [Huge Pages Scope](./limitations.md#huge-pages-scope).
+
+## Run Duration
+
+Production runs of version 1.2.2 that ended with exit code 0 (2,317 runs)
+took the following times, read from the `Total runtime` line of their stderr:
+
+| Run | Duration | Server type |
+| --- | --- | --- |
+| Fastest | 28.0s | [`aws/c8a.medium`](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8a.medium/0/membench/stderr) |
+| Median | 130.6s | |
+| 90th percentile | 320.9s | |
+| Slowest | 914.3s | [`gcp/c4-highmem-288`](https://github.com/SpareCores/sc-inspector-data/blob/main/data/gcp/c4-highmem-288/0/membench/stderr) |
+
+The longest run of any version took 1,428.6 seconds, on
+[`aws/i7ie.48xlarge`](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/i7ie.48xlarge/0/membench/stderr)
+with version 1.0.2. No production run reached the limit of 1,800 seconds.
+
+A single-thread pass on the buffer of thread 0 sets the iteration count for
+about 0.25 seconds, and then all threads run that count. When the threads
+together are limited by memory bandwidth, one multi-thread measurement can
+therefore take several seconds: `elapsed_s` reaches about 4.3 seconds in
+production
+([`aws/c8g.48xlarge` output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.48xlarge/0/membench/stdout)).
+Each bandwidth measurement also runs four times: one discarded warmup run and
+three tries.
+
+Use the `Total runtime` line for the duration of the benchmark itself. The
+`start` and `end` times in a run's `meta.json` include more than the
+benchmark: one run took 2,219 seconds by its
+[`meta.json`](https://github.com/SpareCores/sc-inspector-data/blob/main/data/alicloud/ecs.e-c1m2.2xlarge/0/membench/meta.json)
+but 79.0 seconds by its stderr.
+
+## Production Setup
+
+The [Inspector](https://docs.sparecores.com/overview#how-it-works) of Spare
+Cores Navigator runs this image as the `membench` task
+([`tasks.py`](https://github.com/SpareCores/sc-inspector/blob/main/inspector/tasks.py)).
+A plain `docker run` differs from the production setup as follows:
+
+| Setting | Production | Plain `docker run` |
+| --- | --- | --- |
+| Arguments | `-Hv -t 1800`: huge pages, a log on stderr, and a soft limit of 1,800s | None: regular pages, no log, and no time limit |
+| Privileges | Privileged container | Not privileged unless `--privileged` is passed, which the image requires |
+| Network | Host networking | Docker's default network |
+| Timeout | The task is stopped after 40 min | None |
+| Version | Recorded in `meta.json` from a separate `-V` call | Not recorded |
+| Resource tracking | `resource-tracker` gets a project name, a job name, a run ID, and a token for Spare Cores Sentinel | `resource-tracker` runs with `TRACKER_QUIET=true` and none of these settings |
+
+The equivalent command is the following:
+
+```bash
+docker run --rm --privileged --network host ghcr.io/sparecores/membench:main -Hv -t 1800 > stdout 2> stderr
+```
+
+Production runs this benchmark on every server type except those on the
+blocklist in
+[`inspector_rules.py`](https://github.com/SpareCores/sc-crawler/blob/main/src/sc_crawler/inspector_rules.py),
+which for this benchmark excludes servers with less than 0.9 GB of memory and
+`ovh/r3-128`. The image does not enforce a minimum memory size.
+
+The results are published in the
+[`sc-inspector-data` repository](https://github.com/SpareCores/sc-inspector-data)
+as `data/<vendor>/<server>/<variant>/membench/`, with the files `meta.json`,
+`stdout`, and `stderr`; `<variant>` is `0` for most server types. The resource
+usage that `resource-tracker` samples is not published.
+
+## CSV Output
+
+Rows are printed to stdout as each measurement ends, one per size and
+operation, under the following header:
+
+```text
+size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,threads,iterations,elapsed_s
+```
+
+The columns are the following:
+
+- `size_kb` is the per-thread buffer size in KiB.
+- `operation` is `read`, `write`, `copy`, or `latency`.
+- `bandwidth_mb_s` is the aggregate bandwidth of all threads in MiB/s, and
+  `0` for latency rows.
+- `latency_ns` is the median time of one dependent load in nanoseconds,
+  `latency_stddev_ns` the sample standard deviation of the latency samples,
+  and `latency_samples` their count (7 to 21); all three are `0` for
+  bandwidth rows.
+- `threads` is the thread count used, always `1` for latency.
+- `iterations` is the per-thread iteration count of the kept try for
+  bandwidth rows, and the sample count for latency rows.
+- `elapsed_s` is the timed loop of the slowest thread for bandwidth rows, and
+  the wall time including chain allocation for latency rows.
+
+The memory in use for a row is `size_kb` times `threads`, and twice that for
+copy. See [Results](../README.md#results) for an example.
+
+## Reading the Results
+
+Bandwidth drops and latency rises as the buffer size passes each cache level:
+
+- The first change is at the L1d boundary, typically 32-64KB per thread.
+- The next is at the L2 boundary, typically 256KB-1MB per thread.
+- The last comes when the memory in use exceeds the L3 cache, which depends
+  on the thread count: a bandwidth row uses `size_kb` times `threads`, while
+  latency runs on one thread.
+
+Compare the `threads` column before comparing bandwidths at large sizes; see
+[Memory Guard](./limitations.md#memory-guard). Typical values from the
+previous `README.md` are kept in the changelog under
+[Typical Values](../CHANGELOG.md#typical-values).
+
+## How the Navigator Uses the Results
+
+The Navigator reads only the CSV and publishes four metrics from it, each per
+`size_kb`:
+
+- `membench:bandwidth_read`, `membench:bandwidth_write`, and
+  `membench:bandwidth_copy`, labeled MB/s
+- `membench:latency` in nanoseconds, where lower is better
+
+For each metric, it also publishes one RAM value: the first row whose
+per-thread `size_kb` exceeds the server's total CPU cache, which is the L3
+cache if the server has one, else L2, else L1d. The comparison uses the
+per-thread size, not `size_kb` times `threads`.
+
+The `-R` summary and scores are not published; production does not pass
+`-R`. Results of versions before 1.2.2 are still published, with the version
+noted; see
+[Older Production Results](./limitations.md#older-production-results).
+
+## Human-Readable Output
+
+With `-R`, `membench` prints a table to stdout instead of CSV, and a summary
+with scores to stderr:
+
+```bash
+docker run --rm --privileged ghcr.io/sparecores/membench:main -R
+```
+
+The table shows the bandwidth as "MB/s", "GB/s", or "TB/s", in steps of 1,000
+on the MiB/s value of the CSV. The summary holds the following values:
+
+- **Peak:** the highest bandwidth of each bandwidth operation over all sizes.
+- **Weighted Avg:** the average bandwidth of each operation, weighted by the
+  base-2 logarithm of the size, so larger buffers count more.
+- **Best latency:** the latency at the largest size tested, the closest to
+  RAM latency.
+- **Bandwidth Score:** the mean of the three peaks, divided by 1,000.
+- **Latency Score:** 1,000 divided by the best latency in nanoseconds.
+- **Combined Score:** the square root of the product of the two scores,
+  multiplied by 100. As a geometric mean, it lets neither bandwidth nor
+  latency dominate.
+
+When `-t`, `-p`, or `-s` is set, the summary warns that the scores may not be
+comparable, for example:
+
+```text
+WARNING: Scores may not be comparable due to non-default options:
+  - Time limit (-t 60) may have prevented testing larger buffer sizes
+  - Fixed thread count (-p 4) instead of using all CPUs (32)
+For comparable scores, run without -t, -p, or -s options.
+```
+
+For comparable scores, run without these options, so that all sizes are
+tested on all CPUs. Production does not pass `-R`, and the Navigator does not
+publish these scores. An example of the full output is kept in the changelog
+under [Example Human-Readable Output](../CHANGELOG.md#example-human-readable-output).
+
+## Options
+
+```text
+Usage: membench [options]
+
+Options:
+  -h          Show help (to stderr) and exit
+  -V          Show the version (1.2.2) and exit
+  -v          Verbose log to stderr: system, caches, NUMA nodes, sizes,
+              thread mode, total runtime (-vv adds allocation, huge page,
+              and pinning lines)
+  -s SIZE_KB  Test only this per-thread buffer size in KiB, e.g. -s 1024
+              (disables the sweep; -t is ignored)
+  -r TRIES    Tries per bandwidth test, best kept (default: 3, at least 1;
+              not used for latency)
+  -f          Full sweep: add 512 MiB, 1 GiB, ... up to the memory limit
+              (at most 18 sizes)
+  -p THREADS  Use exactly this many threads for bandwidth (default: online CPUs)
+  -a          Auto-scaling: try 1, 2, 4, ... up to the CPU count per size
+              and bandwidth operation, keep the best
+  -t SECONDS  Soft runtime limit, checked after each test; 0 = unlimited
+              (default: 0)
+  -o OP       Run only this operation: read, write, copy, or latency
+              Can be given several times (default: all four)
+  -H          Huge pages for buffers >= 2x the huge page size
+  -R          Human-readable table (stdout) and summary with scores
+              (stderr) instead of CSV
+```
+
+This is the usage text corrected against the code: the one `-h` prints is
+partly out of date, for example on the default sweep, the `-H` threshold, the
+bandwidth unit, and the `OMP_*` variables. For which buffers `-H` covers, see
+[Huge Pages](./workloads.md#huge-pages).
+
+An invalid value of `-p`, `-s`, `-t`, or `-o` exits with code 1, as does an
+unknown option. A `-r` value below 1 is set to 1 instead
+([`membench.c`](../membench.c), lines 2284-2287).
+
+## Environment Variables
+
+| Variable | Meaning | Default |
+| --- | --- | --- |
+| `TRACKER_QUIET` | Silences the output of `resource-tracker`. | `true` |
+| `OMP_PLACES` | The standard OpenMP list of places that threads can be bound to, such as `cores`. | Unset |
+| `OMP_PROC_BIND` | No effect on the bandwidth operations: the `proc_bind(spread)` clause in the code takes precedence. | Unset |
+| `OMP_NUM_THREADS` | No effect on the bandwidth operations: the code sets its own thread count; use `-p` instead. | Unset |
+
+See [CSV Output](#csv-output) for the output columns.
