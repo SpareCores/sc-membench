@@ -18,8 +18,8 @@ one CPU.
 
 The tool reads the CPU count and the RAM size of the host, not the limits of
 the container. Docker's `--cpus` and `--memory` options do not change the
-thread count, the [sweep limit](./workloads.md#buffer-sizes), or the memory
-guard.
+thread count, the [sweep limit](./workloads.md#buffer-sizes), or the
+[memory guard](#memory-guard).
 
 ### Bandwidth Unit
 

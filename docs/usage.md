@@ -338,7 +338,8 @@ The Navigator reads only the CSV and publishes four metrics from it, each per
 `size_kb`:
 
 - `membench:bandwidth_read`, `membench:bandwidth_write`, and
-  `membench:bandwidth_copy`, labeled MB/s
+  `membench:bandwidth_copy`, labeled MB/s (see
+  [Bandwidth Unit](./limitations.md#bandwidth-unit))
 - `membench:latency` in nanoseconds, where lower is better
 
 For each metric, it also publishes one RAM value: the first row whose

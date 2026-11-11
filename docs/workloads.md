@@ -132,7 +132,8 @@ frequency ramp up. Every try allocates its buffers again.
 The reported value is the per-thread size times the thread
 count times the iteration count, divided by the elapsed time of the slowest
 thread. It is the aggregate of all threads, not a per-thread value; see
-[Bandwidth Unit](./limitations.md#bandwidth-unit) for its unit.
+[Aggregate Bandwidth](./limitations.md#aggregate-bandwidth) for what that means
+and [Bandwidth Unit](./limitations.md#bandwidth-unit) for its unit.
 
 The loops are plain C, built with `-O3` for the baseline instruction set of
 the architecture; see [Plain C Loops](./limitations.md#plain-c-loops).
@@ -225,9 +226,9 @@ in the changelog, under
 
 ## Comparison With LMbench
 
-The bandwidth and latency tests follow `bw_mem` and `lat_mem_rd` of
-[LMbench](https://sourceforge.net/projects/lmbench/), with the following
-differences:
+The bandwidth and latency tests follow
+[`bw_mem`](https://github.com/SpareCores/sc-images/blob/main/images/benchmark/docs/bw-mem.md)
+and `lat_mem_rd` of LMbench, with the following differences:
 
 | Aspect | `membench` | LMbench |
 | --- | --- | --- |
@@ -244,6 +245,8 @@ differences:
 Both report copy as the buffer size divided by the time.
 
 Both latency tests use dependent loads, which prevent pipelining. A fixed
-stride can be detected by stride prefetchers: the `lat_mem_rd` man page calls
-the test "vulnerable to smart, stride-sensitive cache prefetching policies".
+stride can be detected by stride prefetchers: the
+[`lat_mem_rd` man page](https://github.com/intel/lmbench/blob/master/doc/lat_mem_rd.8)
+calls the test "vulnerable to smart, stride-sensitive cache prefetching
+policies".
 The random order of the `membench` chain avoids that.

@@ -105,8 +105,8 @@ all four operations on all CPUs, and prints CSV to stdout:
 docker run --rm --privileged ghcr.io/sparecores/membench:main
 ```
 
-The `--privileged` option is required: the container entrypoint runs
-`membench` under `nice -n -20`, which needs `CAP_SYS_NICE`. Arguments after
+The `--privileged` option is required: the container entrypoint
+([`Dockerfile`](./Dockerfile)) runs `membench` under `nice -n -20`, which needs `CAP_SYS_NICE`. Arguments after
 the image name go to `membench`, for example `-v` for a log on stderr. The
 image is built for `linux/amd64` and `linux/arm64`, and `:main` is the tag to
 use; it runs version 1.2.2 of the code.
@@ -266,7 +266,8 @@ derived the sizes from them, pinned threads, bound memory to NUMA nodes, and
 matched the copy convention of `bw_mem`. The container image was built from
 `images/membench/` in the
 [`sc-images` repository](https://github.com/SpareCores/sc-images) from
-2026-01-05 until 2026-02-27, when the Dockerfile moved to this repository.
+2026-01-05 until 2026-02-27, when the [`Dockerfile`](./Dockerfile) moved to the
+[`sc-membench` repository](https://github.com/SpareCores/sc-membench).
 
 The releases that followed added the following:
 
@@ -286,8 +287,9 @@ Since 1.2.2, only the Docker build and CI changed, so the `:main` image runs
 
 Earlier latency measurements with and without huge pages on an Azure and an
 AWS server type are kept with the release details in the
-[changelog](./CHANGELOG.md). Earlier versions of these docs did not state
-which version and settings produced them.
+[Huge Pages and Latency](./CHANGELOG.md#huge-pages-and-latency) section of the
+changelog. Earlier versions of these docs did not state which version and
+settings produced them.
 
 ## References
 
@@ -296,10 +298,6 @@ documentation, [Building From Source](./docs/build.md) for the build
 dependencies, targets, and packaging status, and the
 [contributor guide](./docs/contributors.md) for the tests and the image
 build.
-
-Related benchmarks: [STREAM](https://www.cs.virginia.edu/stream/),
-[LMbench](https://sourceforge.net/projects/lmbench/), and
-[`ram_bench`](https://github.com/emilk/ram_bench).
 
 ## License
 
