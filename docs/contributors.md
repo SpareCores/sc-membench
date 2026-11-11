@@ -49,7 +49,8 @@ The image workflow ([`docker.yml`](../.github/workflows/docker.yml)) builds
 `linux/amd64` and `linux/arm64` images on native runners, with zstd-compressed
 layers, and merges them into one multi-arch manifest. A push to `main`
 publishes `ghcr.io/sparecores/membench:main` and `:latest`; a published
-GitHub release also publishes the release tag without its `v` prefix.
+GitHub release also publishes an image tag named after the release version,
+without its `v` prefix.
 
 ## Documentation
 

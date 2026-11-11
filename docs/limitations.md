@@ -25,7 +25,8 @@ guard.
 
 The code divides bytes by 1,048,576, so `bandwidth_mb_s` is in MiB/s. The
 column name, the usage text, and the Navigator label it MB/s. The `-R` table
-goes from "MB/s" to "GB/s" in steps of 1,000 on that MiB/s value.
+divides the MiB/s value by 1,000 for each larger label, so a value shown as
+"GB/s" is in units of 1,000 MiB/s.
 
 The `size_kb` column is in KiB (bytes divided by 1,024).
 
@@ -36,9 +37,9 @@ The `size_kb` column is in KiB (bytes divided by 1,024).
 The sweep follows the caches that `hwloc` reports, so its sizes are only as
 good as that detection:
 
-- L3 is the first L3 cache object, the size of one shared L3 cache. On a
-  server with several L3 caches, the largest size, 4 × L3, is four times one
-  of them, not four times their total. With `-v`, stderr labels the size
+- The L3 size is that of the first L3 cache object, which is one shared L3
+  cache. On a server with several L3 caches, the largest sweep size, 4 × L3,
+  is four times one of them, not four times their total. With `-v`, stderr labels the size
   "(per core)", which it is not.
 - When `hwloc` finds no caches, the sizes follow the defaults of 32 KiB,
   256 KiB, and 8 MiB instead of the real caches. In production, this happens
@@ -76,15 +77,15 @@ At sizes where the buffers of all threads would exceed a quarter of the RAM,
 the thread count is halved until they fit. Rows of one run can therefore have
 different `threads` values, and their bandwidths are not directly comparable.
 In production, 453 runs have at least one bandwidth row with fewer threads
-than the maximum of the run. Compare the `threads` column before comparing
-bandwidths at large sizes.
+than the run's largest thread count. Compare the `threads` column before
+comparing bandwidths at large sizes.
 
 ### Latency Sampling
 
 The latency test has the following constraints:
 
 - Sampling stops at 21 samples whatever the CV (Coefficient of Variation), so
-  a row with 21 samples can be less stable than 5%. For example, the
+  a row with 21 samples can have a CV above the 5% target. For example, the
   16,384 KiB row of an AWS (Amazon Web Services) `c8g.medium` run reports
   24.76 ns with a standard deviation of 4.03 ns, a CV of about 16%
   ([recorded output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.medium/0/membench/stdout)).
@@ -135,5 +136,6 @@ changed the latency method, and 1.1.0 moved the bandwidth operations to
 OpenMP. Five of the oldest runs have a CSV with seven columns, without
 `latency_stddev_ns` and `latency_samples`.
 
-We plan to rerun these server types, with no date set yet. Until then, note
-the version of each result when you compare two server types.
+We plan to rerun the server types that have older results, with no date set
+yet. Until then, note the version of each result when you compare two server
+types.

@@ -53,15 +53,15 @@ caches, `-v` prints a note with their count.
 
 For example, an AWS (Amazon Web Services) `m7i.48xlarge` server has two L3
 caches, the first of 105 MiB, and its sweep ends at 512 MiB per thread. An AWS
-`c8a.metal-48xl` server has 24 L3 caches, and its sweep runs from 32 KiB to
-128 MiB per thread
+`c8a.metal-48xl` server has 24 L3 caches of 32 MiB each, and its sweep ends at
+128 MiB per thread, four times one of them
 ([recorded output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8a.metal-48xl/0/membench/stdout)).
 
 If `hwloc` reports no caches, the sizes fall back to the following defaults:
 32 KiB for L1d, 256 KiB for L2, and 8 MiB for L3. The sweep then runs from
 16 KiB up to 32 MiB, regardless of the real cache sizes. In production, 17
-server types print exactly these defaults, all with Ampere Altra-class Arm CPUs, such as
-Hetzner Cloud `cax11`
+server types print exactly these defaults. All of them have Ampere Altra-class
+Arm CPUs; one is Hetzner Cloud `cax11`
 ([recorded log](https://github.com/SpareCores/sc-inspector-data/blob/main/data/hcloud/cax11/0/membench/stderr)).
 
 A binary built without `hwloc` reads the caches of `cpu0` from
@@ -105,12 +105,13 @@ a single-node host, the NUMA allocation makes no difference.
 
 **Calibration:** One warmup read and one timed single-thread pass on the
 buffer of thread 0 set the iteration count, the number of passes over the
-buffer, so that the passes would take about 0.25 seconds on one thread,
-between 3 and 10,000,000 iterations. All threads then run that count.
+buffer, so that the passes would take about 0.25 seconds on one thread. The
+count is kept between 3 and 10,000,000 iterations. All threads then run that
+count.
 
-**Tries:** Each measurement runs once as a discarded warmup, which lets the
-CPU frequency ramp up, then `-r` times (default: 3), and the highest
-bandwidth is kept. Every run allocates its buffers again.
+**Tries:** Each measurement runs once as a discarded warmup, then `-r` times
+(default: 3), and the highest bandwidth is kept. The warmup lets the CPU
+frequency ramp up. Every run allocates its buffers again.
 
 **Bandwidth:** The reported value is the per-thread size times the thread
 count times the iteration count, divided by the elapsed time of the slowest
@@ -135,8 +136,8 @@ Every thread stores one 64-bit pattern to all words of its buffer
 
 Every thread copies its source buffer to its destination buffer one 64-bit
 word at a time ([`membench.c`](../membench.c), `mem_copy`). The bandwidth
-counts the buffer size once per iteration, not the bytes read plus the bytes
-written, which is the convention of `bw_mem`. Because each iteration both
+counts the buffer size once per iteration, as `bw_mem` does, not the bytes read
+plus the bytes written. Because each iteration both
 reads and writes the buffer size, copy bandwidth is typically lower than read
 or write bandwidth.
 

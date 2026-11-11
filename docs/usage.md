@@ -233,10 +233,10 @@ The longest run of any version took 1,428.6 seconds, on
 [`aws/i7ie.48xlarge`](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/i7ie.48xlarge/0/membench/stderr)
 with version 1.0.2. No production run reached the limit of 1,800 seconds.
 
-A single-thread pass on the buffer of thread 0 sets the iteration count for
-about 0.25 seconds, and then all threads run that count. When the threads
-together are limited by memory bandwidth, one multi-thread measurement can
-therefore take several seconds: `elapsed_s` reaches about 4.3 seconds in
+A single-thread pass on the buffer of thread 0 sets the iteration count so
+that this pass takes about 0.25 seconds, and then all threads run that count.
+When the threads together are limited by memory bandwidth, one multi-thread
+measurement can therefore take several seconds: `elapsed_s` reaches about 4.3 seconds in
 production
 ([`aws/c8g.48xlarge` output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.48xlarge/0/membench/stdout)).
 Each bandwidth measurement also runs four times: one discarded warmup run and
@@ -318,9 +318,9 @@ Bandwidth drops and latency rises as the buffer size passes each cache level:
   of the `-v` log, such as 64 KiB per thread on an AWS `c8g.medium` server.
 - The next is at the L2 boundary: the L2 size on the same line, such as
   2 MiB per thread on that server.
-- The last comes when the memory in use exceeds the L3 cache, which depends
-  on the thread count: a bandwidth row uses `size_kb` times `threads`, while
-  latency runs on one thread.
+- The last comes when the memory in use exceeds the L3 cache. That point
+  depends on the thread count: a bandwidth row uses `size_kb` times `threads`,
+  while latency runs on one thread.
 
 Compare the `threads` column before comparing bandwidths at large sizes; see
 [Memory Guard](./limitations.md#memory-guard). Typical values given for
@@ -361,8 +361,9 @@ with scores to stderr:
 docker run --rm --privileged ghcr.io/sparecores/membench:main -R
 ```
 
-The table shows the bandwidth as "MB/s", "GB/s", or "TB/s", in steps of 1,000
-on the MiB/s value of the CSV. The summary holds the following values:
+The table shows the bandwidth as "MB/s", "GB/s", or "TB/s". It divides the
+MiB/s value of the CSV by 1,000 for each larger label, so a value shown as
+"GB/s" is in units of 1,000 MiB/s. The summary holds the following values:
 
 - **Peak:** the highest bandwidth of each bandwidth operation over all sizes.
 - **Weighted Avg:** the average bandwidth of each operation, weighted by the
@@ -419,9 +420,19 @@ Options:
               (stderr) instead of CSV
 ```
 
-This is the usage text corrected against the code: the one `-h` prints is
-partly out of date, for example on the default sweep, the `-H` threshold, the
-bandwidth unit, and the `OMP_*` variables. For which buffers `-H` covers, see
+This is the usage text corrected against the code. The text that `-h` prints is
+out of date on the following five points:
+
+- The default sweep stops at 4 × L3, not at "512 MB per thread".
+- The `-H` threshold is twice the huge page size, not "4MB".
+- The bandwidth unit is MiB/s, not MB/s.
+- `-t` is a soft limit, checked after each measurement and ignored with `-s`,
+  not a "maximum runtime".
+- The `OMP_NUM_THREADS` and `OMP_PROC_BIND` variables do not change the thread
+  count or the placement.
+
+The man page, `membench.1`, repeats the statements about the default sweep, the
+`-H` threshold, and the `OMP_*` variables. For which buffers `-H` covers, see
 [Huge Pages](./workloads.md#huge-pages).
 
 An invalid value of `-p`, `-s`, `-t`, or `-o` exits with code 1, as does an

@@ -52,16 +52,17 @@ for how the RAM value is picked.
 
 ## Limitations
 
-The results compare the cache and memory subsystems of server types with
-portable, compiler-generated code. The main limitations are the following:
+The results compare the cache and memory subsystems across server types,
+measured with portable, compiler-generated code. The main limitations are the
+following:
 
 - **[Plain C Loops](./docs/limitations.md#plain-c-loops):** The bandwidth
   loops are plain C for the baseline instruction set, without hand-written
   SIMD (Single Instruction, Multiple Data) code or non-temporal stores.
-- **[Cache Detection](./docs/limitations.md#cache-detection):** L3 means one
-  shared L3 cache, not the server total. When `hwloc` finds no caches, the
-  sizes follow 32 KiB, 256 KiB, and 8 MiB defaults, as on 17 Arm server types
-  in production.
+- **[Cache Detection](./docs/limitations.md#cache-detection):** The L3 size
+  is that of one shared L3 cache, not the server total. When `hwloc` finds no
+  caches, the sweep uses default cache sizes of 32 KiB (L1d), 256 KiB (L2), and
+  8 MiB (L3), as on 17 Arm server types in production.
 - **[Container Limits](./docs/limitations.md#container-limits):** The CPU
   count and RAM size come from the host, not from Docker's `--cpus` or
   `--memory` limits.
@@ -138,8 +139,9 @@ See [Building from Source](./docs/build.md) for the other platforms and
 build targets, and [Usage Examples](./docs/usage.md#usage-examples) for more
 commands.
 
-Production runs the container privileged with host networking, huge pages,
-a verbose log, and a soft time limit of 1,800 seconds:
+Production runs the container privileged and with host networking, and passes
+`-Hv -t 1800` for huge pages, a verbose log, and a soft time limit of
+1,800 seconds:
 
 ```bash
 docker run --rm --privileged --network host ghcr.io/sparecores/membench:main -Hv -t 1800 > stdout 2> stderr
@@ -148,9 +150,9 @@ docker run --rm --privileged --network host ghcr.io/sparecores/membench:main -Hv
 See [Production Setup](./docs/usage.md#production-setup) before comparing
 results with the Navigator's.
 
-A production run of version 1.2.2 takes 28 seconds on the fastest server type
-and 2 minutes 11 seconds on the median one; 10% of the runs take more than
-5 minutes 21 seconds, and the slowest took 15 minutes 14 seconds. See
+Production runs of version 1.2.2 took 28 seconds at the fastest, 2 minutes
+11 seconds at the median, and 15 minutes 14 seconds at the slowest; 10% took
+more than 5 minutes 21 seconds. See
 [Run Duration](./docs/usage.md#run-duration) for what drives the time.
 
 ### Settings
@@ -191,8 +193,9 @@ For example, a production run on an AWS (Amazon Web Services)
 1 vCPU, 64 KiB of L1d, 2 MiB of L2, and 36 MiB of L3 cache measured 10 sizes
 from 32 KiB to 128 MiB in 56 seconds
 ([recorded output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.medium/0/membench/stdout)).
-Its first size, the L3 size (36 MiB, rounded to 32 MiB), and the largest size
-(4 × L3, rounded to 128 MiB) read as follows:
+The rows of three of its sizes follow: the first size (32 KiB), the L3 size
+(36 MiB, rounded to 32 MiB), and the largest size (4 × L3, rounded to
+128 MiB):
 
 ```text
 size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,threads,iterations,elapsed_s
@@ -218,7 +221,7 @@ size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,th
 Read bandwidth falls from \~73 GiB/s in L1d to \~26 GiB/s at 128 MiB, and
 latency rises from 2.16 ns to 110.84 ns. The 32 MiB latency row stopped at
 the 21-sample limit with a CV (Coefficient of Variation) of about 10%, above
-the 5% target, and so did the 16 MiB row, not shown, with about 16%; see
+the 5% target. The 16 MiB row, not shown, stopped there too, at about 16%. See
 [Latency Sampling](./docs/limitations.md#latency-sampling).
 
 ## Workloads
@@ -238,8 +241,9 @@ the following operations in this fixed order; `-o` only filters them:
   current size, and the median of 7 to 21 timed samples is reported.
 
 The bandwidth operations run on all online CPUs as OpenMP threads, each with
-its own buffer on the NUMA node of the CPU it runs on, and the best of three
-tries after one discarded warmup run is kept. See
+its own buffer on the NUMA node of the CPU it runs on. Each bandwidth
+measurement runs one discarded warmup, then three tries, and the best try is
+kept. See
 [Buffer Sizes](./docs/workloads.md#buffer-sizes) for how the sizes are
 derived from the caches, and
 [Threads and Memory Placement](./docs/workloads.md#threads-and-memory-placement)
@@ -257,7 +261,7 @@ matched the copy convention of `bw_mem`. The container image was built from
 
 The releases that followed added huge page support (1.0.1), measurements that
 run until a target time or a maximum iteration count (1.0.2), a new latency
-test adapted from `ram_bench` and macOS and BSD support (1.0.3), a rewrite of
+test adapted from `ram_bench`, plus macOS and BSD support (1.0.3), a rewrite of
 the bandwidth tests to OpenMP (1.1.0), the human-readable output and scores
 (1.2.0), a single binary per architecture built for its baseline instruction
 set (1.2.1), and a man page (1.2.2). Since 1.2.2, only the Docker build and
