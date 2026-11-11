@@ -35,8 +35,8 @@ The `size_kb` column is in KiB (bytes divided by 1,024).
 
 ### Cache Detection
 
-The sweep follows the caches that `hwloc` reports, so its sizes are only as
-good as that detection:
+The sweep follows the caches that `hwloc` (Portable Hardware Locality)
+reports, so its sizes are only as good as that detection:
 
 - The L3 size is that of the first L3 cache object, which is one shared L3
   cache. On a server with several L3 caches, the largest sweep size, 4 × L3,
@@ -75,8 +75,9 @@ describe what the code does and does not control:
 
 ### Memory Guard
 
-At sizes where the buffers of all threads would exceed a quarter of the RAM,
-the thread count is halved until they fit. Rows of one run can therefore have
+The membench memory guard applies at sizes where the buffers of all threads
+would exceed a quarter of the RAM: it halves the thread count until they fit.
+Rows of one run can therefore have
 different `threads` values, and their bandwidths are not directly comparable.
 In production, 453 runs have at least one bandwidth row with fewer threads
 than the run's largest thread count. Compare the `threads` column before
@@ -135,8 +136,9 @@ limit, which the log reports as `Time limit reached`.
 Production results from versions 1.0.1 to 1.2.1 are published next to those
 of 1.2.2, with the version recorded in the `version` field of each run's
 `meta.json`. Version 1.0.3 changed the latency method, and 1.1.0 moved the
-bandwidth operations to OpenMP. Five of the oldest runs have a CSV with seven columns, without
-`latency_stddev_ns` and `latency_samples`.
+bandwidth operations to OpenMP. Five of the oldest runs have a CSV
+(Comma-Separated Values) with seven columns, without `latency_stddev_ns` and
+`latency_samples`.
 
 We plan to rerun the server types that have older results, with no date set
 yet. Until then, check the version of each result before comparing two server

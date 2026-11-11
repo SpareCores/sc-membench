@@ -7,8 +7,8 @@ size times the thread count, and twice that for copy, which needs a source and
 a destination buffer. For example, at 1 MiB with four threads, read and write
 use 4 MiB in total, and copy uses 8 MiB.
 
-The default size sweep derives the following sizes from the detected L1d, L2,
-and L3 cache sizes ([`membench.c`](../membench.c), `get_sizes`):
+The default membench size sweep derives the following sizes from the detected
+L1d, L2, and L3 cache sizes ([`membench.c`](../membench.c), `get_sizes`):
 
 | Size | What it shows |
 | --- | --- |
@@ -47,8 +47,8 @@ copy, and latency in that order.
 
 ### Cache Detection
 
-The cache sizes come from `hwloc`: the first L1d, L2, and L3 cache object it
-reports. The L3 size is therefore the size of one shared L3 cache (one die or
+The cache sizes come from `hwloc` (Portable Hardware Locality): the first L1d,
+L2, and L3 cache object it reports. The L3 size is therefore the size of one shared L3 cache (one die or
 socket), not a per-core share and not the total. When a server has several L3
 caches, `-v` prints a note with their count.
 
@@ -65,13 +65,13 @@ server types print exactly these defaults. All of them have Ampere Altra-class
 Arm CPUs; one is Hetzner Cloud `cax11`
 ([recorded log](https://github.com/SpareCores/sc-inspector-data/blob/main/data/hcloud/cax11/0/membench/stderr)).
 
-The defaults apply per level ([`membench.c`](../membench.c), `use_defaults`): when
-only the L3 size is missing, the L3 size becomes 8 MiB and the other sizes stay
-as detected.
+The defaults apply per level ([`membench.c`](../membench.c), `use_defaults`):
+when only the L3 size is missing, the L3 size becomes 8 MiB and the other sizes
+stay as detected.
 
 A binary built without `hwloc` reads the caches of `cpu0` from
-`/sys/devices/system/cpu/` on Linux and from `sysctl` on macOS and BSD. The
-image is built with `hwloc`.
+`/sys/devices/system/cpu/` on Linux and from `sysctl` on macOS and BSD
+(Berkeley Software Distribution). The image is built with `hwloc`.
 
 ## Threads and Memory Placement
 
@@ -88,9 +88,9 @@ RAM size are those of the host; see
 
 ### Memory Guard
 
-The thread count is halved until the size times the thread
-count (times two for copy) is at most a quarter of the RAM. With `-a`, thread
-counts that would exceed it are skipped. The guard is stricter than the
+The membench memory guard halves the thread count until the size times the
+thread count (times two for copy) is at most a quarter of the RAM. With `-a`,
+thread counts that would exceed it are skipped. The guard is stricter than the
 [sweep limit](#buffer-sizes), so a size between the two stays in the sweep
 and runs on fewer threads. For example, on `m7i.48xlarge`, copy at
 512 MiB ran on 96 of the 192 threads
@@ -235,7 +235,7 @@ differences:
 | Size reported | Per-thread buffer size | Per-process buffer size |
 | Read | All of the data (`read`) | `rd` reads every fourth word, 25% of the buffer; `frd` reads all |
 | Operations | All in one run; `-o` selects | One invocation per operation, such as `bw_mem 64m rd` and `bw_mem 64m wr` |
-| Output | CSV on stdout | Text on stderr |
+| Output | CSV (Comma-Separated Values) on stdout | Text on stderr |
 | Huge pages | `-H` | None (uses `valloc`) |
 | Latency chain | 16-byte nodes (payload and pointer) in random order, visiting all nodes | 8-byte pointers at a fixed backward stride, 64 bytes by default on 64-bit |
 | Latency result | Median of 7 to 21 samples, with standard deviation and count | One measurement |

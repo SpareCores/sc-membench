@@ -14,9 +14,9 @@ The tool is one C file, [`membench.c`](../membench.c), built with the
 | Library | Purpose | Platforms | Need |
 | --- | --- | --- | --- |
 | C11 compiler with OpenMP (GCC or Clang) | Builds the tool | All | Required to build |
-| `libgomp` | OpenMP runtime for the parallel execution (`libgomp1` on Debian and Ubuntu, `libgomp` on RHEL) | All | Required at runtime |
-| `hwloc` 2 | Detects the L1d, L2, and L3 cache sizes | Linux, macOS, BSD | Recommended, at build and runtime |
-| `libnuma` | Allocates each buffer on the NUMA node of its thread | Linux only | Optional, at build and runtime |
+| `libgomp` | OpenMP runtime for the parallel execution (`libgomp1` on Debian and Ubuntu, `libgomp` on RHEL (Red Hat Enterprise Linux)) | All | Required at runtime |
+| `hwloc` 2 (Portable Hardware Locality) | Detects the L1d, L2, and L3 cache sizes | Linux, macOS, BSD (Berkeley Software Distribution) | Recommended, at build and runtime |
+| `libnuma` | Allocates each buffer on the NUMA (Non-Uniform Memory Access) node of its thread | Linux only | Optional, at build and runtime |
 | `libhugetlbfs` | Detects the huge page size | Linux only | Optional, at build and runtime |
 
 A build with `hwloc` needs version 2.x; version 1.x has a different API and is

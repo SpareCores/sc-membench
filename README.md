@@ -8,10 +8,10 @@ each cache level and RAM.
 
 At each size, this benchmark reports the aggregate read, write, and copy
 bandwidth of all CPUs, and the latency of a single thread chasing pointers
-through the buffer in random order, as one CSV row per size and operation.
-It measures CPU memory local to the NUMA (Non-Uniform Memory Access) node of
-each thread, not access across NUMA nodes, per-thread or per-node bandwidth,
-or GPU memory, which
+through the buffer in random order, as one CSV (Comma-Separated Values) row
+per size and operation. It measures CPU memory local to the NUMA (Non-Uniform
+Memory Access) node of each thread, not access across NUMA nodes, per-thread or
+per-node bandwidth, or GPU memory, which
 [`nvbandwidth`](https://github.com/SpareCores/sc-images/tree/main/images/nvbandwidth)
 measures.
 
@@ -23,11 +23,11 @@ among them the
 [memory bandwidth](https://github.com/SpareCores/sc-images/blob/main/images/benchmark/docs/bw-mem.md)
 measured with LMbench's `bw_mem`.
 
-We ran `bw_mem` across 3000+ cloud server
-types, and the results were not always consistent with the detected L1d, L2,
-and L3 cache sizes. Some inconsistencies came from cache detection, which
-relied on `lscpu` output that is sometimes wrong or incomplete; others traced
-back to `bw_mem` itself, so we wrote our own tool. The problems with
+We ran `bw_mem` across 3000+ cloud server types, and the results were not
+always consistent with the detected L1d, L2, and L3 cache sizes. Some
+inconsistencies came from cache detection, which relied on the output of the
+`lscpu` command, and that output is sometimes wrong or incomplete; others
+traced back to `bw_mem` itself, so we wrote our own tool. The problems with
 `bw_mem` were the following:
 
 - Its `rd` mode reads every fourth word, so only 25% of the buffer is
@@ -36,9 +36,9 @@ back to `bw_mem` itself, so we wrote our own tool. The problems with
 - It forks one process per parallel worker instead of starting threads, and
   on servers with 96 or 192 vCPUs we saw unexpected slowdowns that we could
   not reproduce or explain. This benchmark uses OpenMP threads instead.
-- It has no huge page support (it uses `valloc`), so large-buffer latency
-  tests pay TLB (Translation Lookaside Buffer) overhead on top of the actual
-  memory latency.
+- It has no huge page support (it uses the `valloc` allocator, which returns
+  regular pages), so large-buffer latency tests pay TLB (Translation Lookaside
+  Buffer) overhead on top of the actual memory latency.
 - It reports a single latency number, while this benchmark collects several
   independent samples per measurement and reports the median.
 
@@ -64,10 +64,10 @@ following:
   loops are plain C for the baseline instruction set, without hand-written
   SIMD (Single Instruction, Multiple Data) code or non-temporal stores.
 - **[Cache Detection](./docs/limitations.md#cache-detection):** The L3 size
-  is that of one shared L3 cache, not the server total. When `hwloc` finds no
-  caches, the sweep uses default cache sizes of 32 KiB (L1d), 256 KiB (L2), and
-  8 MiB (L3), as on 17 Arm server types in the Navigator's
-  [production runs](./docs/usage.md#production-setup).
+  is that of one shared L3 cache, not the server total. When `hwloc` (Portable
+  Hardware Locality) finds no caches, the sweep uses default cache sizes of
+  32 KiB (L1d), 256 KiB (L2), and 8 MiB (L3), as on 17 Arm server types in the
+  Navigator's [production runs](./docs/usage.md#production-setup).
 - **[Container Limits](./docs/limitations.md#container-limits):** The CPU
   count and RAM size come from the host, not from Docker's `--cpus` or
   `--memory` limits.
@@ -274,7 +274,7 @@ The releases that followed added the following:
 - 1.0.2: measurements that run until a target time or a maximum iteration
   count.
 - 1.0.3: a new latency test adapted from `ram_bench`, plus macOS and BSD
-  support.
+  (Berkeley Software Distribution) support.
 - 1.1.0: a rewrite of the bandwidth tests to OpenMP.
 - 1.2.0: the human-readable output and scores.
 - 1.2.1: a single binary per architecture, built for its baseline instruction

@@ -3,7 +3,7 @@
 ## Running via Docker
 
 With no arguments, the image sweeps the default sizes with all four operations
-on all CPUs, and prints CSV to stdout:
+on all CPUs, and prints CSV (Comma-Separated Values) to stdout:
 
 ```bash
 docker run --rm --privileged ghcr.io/sparecores/membench:main
@@ -368,7 +368,8 @@ docker run --rm --privileged ghcr.io/sparecores/membench:main -R
 
 The table shows the bandwidth as "MB/s", "GB/s", or "TB/s". It divides the
 MiB/s value of the CSV by 1,000 for each larger label, so a value shown as
-"GB/s" is in units of 1,000 MiB/s. The summary holds the following values:
+"GB/s" is in units of 1,000 MiB/s. The summary holds the following values, of
+which the last three are the membench scores:
 
 - **Peak:** the highest bandwidth of each bandwidth operation over all sizes.
 - **Weighted Avg:** the average bandwidth of each operation, weighted by the
