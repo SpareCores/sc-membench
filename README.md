@@ -109,7 +109,7 @@ The `--privileged` option is required: the container entrypoint
 ([`Dockerfile`](./Dockerfile)) runs `membench` under `nice -n -20`, which needs `CAP_SYS_NICE`. Arguments after
 the image name go to `membench`, for example `-v` for a log on stderr. The
 image is built for `linux/amd64` and `linux/arm64`, and `:main` is the tag to
-use; it runs version 1.2.2 of the code.
+use; it runs version [1.2.2](./CHANGELOG.md#122-man-page) of the code.
 
 To run the tool without Docker, check the
 [packaging status](./docs/build.md#packages) for a distribution package, or

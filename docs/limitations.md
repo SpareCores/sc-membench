@@ -134,7 +134,7 @@ limit, which the log reports as `Time limit reached`.
 ### Older Production Results
 
 Production results from versions 1.0.1 to 1.2.1 are published next to those
-of 1.2.2, with the version recorded in the `version` field of each run's
+of [1.2.2](../CHANGELOG.md#122-man-page), with the version recorded in the `version` field of each run's
 `meta.json`. Version 1.0.3 changed the latency method, and 1.1.0 moved the
 bandwidth operations to OpenMP. Five of the oldest runs have a CSV
 (Comma-Separated Values) with seven columns, without `latency_stddev_ns` and

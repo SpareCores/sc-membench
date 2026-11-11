@@ -11,7 +11,7 @@ carry, see the
 The tool is one C file, [`membench.c`](../membench.c), built with the
 [`Makefile`](../Makefile). The build and the binary need the following:
 
-| Library | Purpose | Platforms | Need |
+| Dependency | Purpose | Platforms | Need |
 | --- | --- | --- | --- |
 | C11 compiler with OpenMP (GCC or Clang) | Builds the tool | All | Required to build |
 | `libgomp` | OpenMP runtime for the parallel execution (`libgomp1` on Debian and Ubuntu, `libgomp` on RHEL (Red Hat Enterprise Linux)) | All | Required at runtime |

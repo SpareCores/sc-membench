@@ -9,7 +9,7 @@ dependencies per platform, the install commands, and every build target.
 ## Tests
 
 CI runs on every push and pull request
-([`ci.yml`](../.github/workflows/ci.yml)). It builds `make all` and runs the
+([`ci.yml`](../.github/workflows/ci.yml)). It runs `make all` and the
 following smoke test on Linux x86_64 and arm64, macOS arm64 and x86_64, and
 FreeBSD x86_64:
 
@@ -36,8 +36,9 @@ The [`Dockerfile`](../Dockerfile) works as follows:
 - The final stage, also on `ubuntu:24.04`, installs `libhwloc15`, `libnuma1`,
   `libhugetlbfs-dev`, and `libgomp1`, and copies in the binary as
   `/usr/local/bin/membench`.
-- The `resource-tracker` binary is copied from the image named by the
-  `RESOURCE_TRACKER_IMAGE` build argument (default:
+- The `resource-tracker` binary is copied from the
+  [`resource-tracker` image](https://github.com/SpareCores/sc-images/tree/main/images/resource-tracker)
+  named by the `RESOURCE_TRACKER_IMAGE` build argument (default:
   `ghcr.io/sparecores/resource-tracker:main`).
 - The build context excludes `.git`, `.github`, any Markdown files in the
   repository root, the [`membench.1`](../membench.1) man page, and built
@@ -54,8 +55,8 @@ without its `v` prefix.
 
 ## Documentation
 
-The `DESCRIPTION` file holds the one-sentence summary of the image. Its text
-is repeated in the Images table of the `README.md` in the
+The [`DESCRIPTION`](../DESCRIPTION) file holds the one-sentence summary of the
+image. Its text is repeated in the Images table of the `README.md` in the
 [`sc-images` repository](https://github.com/SpareCores/sc-images), so change
-both together. The man page, `membench.1`, is maintained separately from
-these docs.
+both together. The man page, [`membench.1`](../membench.1), is maintained
+separately from these docs.

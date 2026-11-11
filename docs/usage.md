@@ -11,9 +11,12 @@ docker run --rm --privileged ghcr.io/sparecores/membench:main
 
 The container entrypoint is
 `resource-tracker -- nice -n -20 /usr/local/bin/membench`
-([`Dockerfile`](../Dockerfile)), so arguments after the image name go to
-`membench`. The `--privileged` option is required, because raising the
-priority with `nice -n -20` needs `CAP_SYS_NICE`.
+([`Dockerfile`](../Dockerfile)), where the `resource-tracker` binary comes from
+the
+[`resource-tracker` image](https://github.com/SpareCores/sc-images/tree/main/images/resource-tracker).
+Arguments after the image name go to `membench`. The `--privileged` option is
+required, because raising the priority with `nice -n -20` needs
+`CAP_SYS_NICE`.
 
 The following commands show the common variations:
 
@@ -47,8 +50,8 @@ every push to the `main` branch of the
 
 A published GitHub release also pushes a tag with the release version, but no
 release has been published since the image build was added, so no version tag
-exists yet. The `:main` image runs version 1.2.2 of the code, which `-V`
-prints.
+exists yet. The `:main` image runs version
+[1.2.2](../CHANGELOG.md#122-man-page) of the code, which `-V` prints.
 
 Without `-v` or `-R`, a run prints nothing to stderr unless a latency buffer
 cannot be allocated. With `-v`, the log looks as follows on an AWS
