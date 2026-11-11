@@ -78,13 +78,17 @@ image is built with `hwloc`.
 The read, write, and copy operations share the following method
 ([`membench.c`](../membench.c), `run_benchmark_omp` and `find_best_config`).
 
-**Thread count:** By default, the thread count is the number of online CPUs.
+### Thread Count
+
+By default, the thread count is the number of online CPUs.
 The `-p` option fixes it, and `-a` tries 1, 2, 4, and so on up to the CPU
 count and keeps the count with the highest bandwidth. The CPU count and the
 RAM size are those of the host; see
 [Container Limits](./limitations.md#container-limits).
 
-**Memory guard:** The thread count is halved until the size times the thread
+### Memory Guard
+
+The thread count is halved until the size times the thread
 count (times two for copy) is at most a quarter of the RAM. With `-a`, thread
 counts that would exceed it are skipped. The guard is stricter than the
 [sweep limit](#buffer-sizes), so a size between the two stays in the sweep
@@ -93,7 +97,9 @@ and runs on fewer threads. For example, on `m7i.48xlarge`, copy at
 ([recorded output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/m7i.48xlarge/0/membench/stdout)).
 The `threads` column shows the count each row used.
 
-**Placement:** The threads run in an OpenMP parallel region with the
+### Placement
+
+The threads run in an OpenMP parallel region with the
 `proc_bind(spread)` clause. Each thread allocates its own buffer inside that
 region and writes to all of it before the measurement. With `libnuma`
 available, as in the image, the buffer is allocated on the NUMA
@@ -108,17 +114,22 @@ cross-node accesses and page migrations during the measurement. Because no
 two threads share a buffer, they do not contend for the same cache lines. On
 a single-node host, the NUMA allocation makes no difference.
 
-**Calibration:** One warmup read and one timed one-thread pass on the
-buffer of thread 0 set the iteration count, the number of passes over the
-buffer, so that the passes would take about 0.25 seconds on one thread. The
-count is kept between 3 and 10,000,000 iterations. All threads then run that
-count.
+### Calibration
 
-**Tries:** Each measurement runs once as a discarded warmup, then `-r` times
+One warmup read and one timed one-thread pass on the buffer of thread 0 set
+the iteration count, the number of passes over the buffer, so that the passes
+would take about 0.25 seconds on one thread. The count is kept between 3 and
+10,000,000 iterations. All threads then run that count.
+
+### Tries
+
+Each measurement runs once as a discarded warmup, then `-r` times
 (default: 3), and the highest bandwidth is kept. The warmup lets the CPU
 frequency ramp up. Every try allocates its buffers again.
 
-**Bandwidth:** The reported value is the per-thread size times the thread
+### Bandwidth
+
+The reported value is the per-thread size times the thread
 count times the iteration count, divided by the elapsed time of the slowest
 thread. It is the aggregate of all threads, not a per-thread value; see
 [Bandwidth Unit](./limitations.md#bandwidth-unit) for its unit.
@@ -212,7 +223,7 @@ pages. Production passes `-H`. Earlier measurements with and without it are
 in the changelog, under
 [Huge Pages and Latency](../CHANGELOG.md#huge-pages-and-latency).
 
-## Comparison with LMbench
+## Comparison With LMbench
 
 The bandwidth and latency tests follow `bw_mem` and `lat_mem_rd` of
 [LMbench](https://sourceforge.net/projects/lmbench/), with the following
@@ -223,13 +234,14 @@ differences:
 | Parallelism | OpenMP threads, one buffer each | Processes (`fork`), one buffer each |
 | Size reported | Per-thread buffer size | Per-process buffer size |
 | Read | All of the data (`read`) | `rd` reads every fourth word, 25% of the buffer; `frd` reads all |
-| Copy reported | Buffer size / time | Buffer size / time |
 | Operations | All in one run; `-o` selects | One invocation per operation, such as `bw_mem 64m rd` and `bw_mem 64m wr` |
 | Output | CSV on stdout | Text on stderr |
 | Huge pages | `-H` | None (uses `valloc`) |
 | Latency chain | 16-byte nodes (payload and pointer) in random order, visiting all nodes | 8-byte pointers at a fixed backward stride, 64 bytes by default on 64-bit |
 | Latency result | Median of 7 to 21 samples, with standard deviation and count | One measurement |
 | Pinning | Latency on CPU 0, with NUMA-local memory | None |
+
+Both report copy as the buffer size divided by the time.
 
 Both latency tests use dependent loads, which prevent pipelining. A fixed
 stride can be detected by stride prefetchers: the `lat_mem_rd` man page calls

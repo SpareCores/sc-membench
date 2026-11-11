@@ -43,10 +43,12 @@ docker run --rm --privileged ghcr.io/sparecores/membench:main -V
 The image is published for `linux/amd64` and `linux/arm64` and rebuilt on
 every push to the `main` branch of the
 [`sc-membench` repository](https://github.com/SpareCores/sc-membench). Use the
-`:main` tag; `:latest` points to the same build. A published GitHub release
-also pushes a tag with the release version, but no release has been published
-since the image build was added, so no version tag exists yet. The `:main`
-image runs version 1.2.2 of the code, which `-V` prints.
+`:main` tag; `:latest` points to the same build.
+
+A published GitHub release also pushes a tag with the release version, but no
+release has been published since the image build was added, so no version tag
+exists yet. The `:main` image runs version 1.2.2 of the code, which `-V`
+prints.
 
 Without `-v` or `-R`, a run prints nothing to stderr unless a latency buffer
 cannot be allocated. With `-v`, the log looks as follows on an AWS
@@ -82,16 +84,10 @@ Install `membench` from a distribution package, or build it from source:
 
 - **Package:** see [Packages](./build.md#packages) for the packaging status
   of `sc-membench` across distributions.
-- **Source:** see [Building from Source](./build.md) for the dependencies per
-  platform and the build targets. In short, on Debian or Ubuntu:
-
-  ```bash
-  git clone https://github.com/SpareCores/sc-membench
-  cd sc-membench
-  sudo apt-get install build-essential libhugetlbfs-dev libhwloc-dev libnuma-dev
-  make full
-  ./membench-full -v
-  ```
+- **Source:** see [Building From Source](./build.md) for the dependencies per
+  platform and the build targets, and
+  [Recommended Build](./build.md#recommended-build) for the commands on a
+  server.
 
 The binary takes the same options as the image. Run it as follows:
 
@@ -241,6 +237,7 @@ When the threads together are limited by memory bandwidth, one multi-thread
 measurement can therefore take several seconds: `elapsed_s` reaches about
 4.3 seconds in production
 ([`aws/c8g.48xlarge` output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.48xlarge/0/membench/stdout)).
+
 Each bandwidth measurement also runs four times: one discarded warmup try and
 three tries.
 
@@ -402,6 +399,9 @@ under [Example Human-Readable Output](../CHANGELOG.md#example-human-readable-out
 
 ## Options
 
+The following usage text is corrected against the code, so it differs from the
+text that `-h` prints:
+
 ```text
 Usage: membench [options]
 
@@ -429,8 +429,7 @@ Options:
               (stderr) instead of CSV
 ```
 
-This is the usage text corrected against the code. The text that `-h` prints is
-out of date on the following five points:
+The text that `-h` prints is out of date on the following five points:
 
 - The default sweep stops at 4 × L3, not at "512 MB per thread".
 - The `-H` threshold is twice the huge page size, not "4MB".
@@ -446,7 +445,7 @@ The man page, `membench.1`, repeats the statements about the default sweep, the
 
 An invalid value of `-p`, `-s`, `-t`, or `-o` exits with code 1, as does an
 unknown option. A `-r` value below 1 is set to 1 instead
-([`membench.c`](../membench.c), lines 2284-2287).
+([`membench.c`](../membench.c#L2284-L2287)).
 
 ## Environment Variables
 

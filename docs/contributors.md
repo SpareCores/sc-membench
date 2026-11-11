@@ -3,7 +3,7 @@
 ## Building the Tool
 
 The tool is one C file, [`membench.c`](../membench.c), built with the
-[`Makefile`](../Makefile). See [Building from Source](./build.md) for the
+[`Makefile`](../Makefile). See [Building From Source](./build.md) for the
 dependencies per platform, the install commands, and every build target.
 
 ## Tests

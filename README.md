@@ -2,9 +2,9 @@
 
 This benchmark measures the memory bandwidth and latency of cloud servers with
 `membench`, a C tool that the Spare Cores team wrote with OpenMP. It sweeps
-per-thread buffer sizes derived from the detected L1d, L2, and L3 cache sizes, from half
-the L1d cache to four times the L3 cache, so that the results trace each cache
-level and RAM.
+per-thread buffer sizes derived from the detected L1d, L2, and L3 cache sizes,
+from half the L1d cache to four times the L3 cache, so that the results trace
+each cache level and RAM.
 
 At each size, this benchmark reports the aggregate read, write, and copy
 bandwidth of all CPUs, and the latency of a single thread chasing pointers
@@ -21,7 +21,9 @@ measures.
 empirical performance measurements for more than 5,000 cloud server types,
 among them the
 [memory bandwidth](https://github.com/SpareCores/sc-images/blob/main/images/benchmark/docs/bw-mem.md)
-measured with LMbench's `bw_mem`. We ran `bw_mem` across 3,000+ cloud server
+measured with LMbench's `bw_mem`.
+
+We ran `bw_mem` across 3,000+ cloud server
 types, and the results were not always consistent with the detected L1d, L2,
 and L3 cache sizes. Some inconsistencies came from cache detection, which
 relied on `lscpu` output that is sometimes wrong or incomplete; others traced
@@ -32,8 +34,8 @@ back to `bw_mem` itself, so we wrote our own tool. The problems with
   accessed, and the reported bandwidth looks about 4x higher than the actual
   throughput unless its `frd` mode is used.
 - It forks one process per parallel worker instead of starting threads, and
-  on servers with 96 or 192 vCPUs we saw unexpected slowdowns that we could not reproduce or explain. This
-  benchmark uses OpenMP threads instead.
+  on servers with 96 or 192 vCPUs we saw unexpected slowdowns that we could
+  not reproduce or explain. This benchmark uses OpenMP threads instead.
 - It has no huge page support (it uses `valloc`), so large-buffer latency
   tests pay TLB (Translation Lookaside Buffer) overhead on top of the actual
   memory latency.
@@ -43,8 +45,10 @@ back to `bw_mem` itself, so we wrote our own tool. The problems with
 The article
 [Modern Memory Bandwidth Benchmarks](https://sparecores.com/article/membench)
 describes the `bw_mem` findings in full, and
-[Comparison with LMbench](./docs/workloads.md#comparison-with-lmbench) lists
-the differences in method. The Navigator publishes four metrics from the
+[Comparison With LMbench](./docs/workloads.md#comparison-with-lmbench) lists
+the differences in method.
+
+The Navigator publishes four metrics from the
 output of this benchmark: read, write, and copy bandwidth, and latency, each
 per buffer size, plus one RAM value per metric. See
 [How the Navigator Uses the Results](./docs/usage.md#how-the-navigator-uses-the-results)
@@ -136,7 +140,7 @@ make full
 ./membench-full -H -v
 ```
 
-See [Building from Source](./docs/build.md) for the other platforms and
+See [Building From Source](./docs/build.md) for the other platforms and
 build targets, and [Usage Examples](./docs/usage.md#usage-examples) for more
 commands.
 
@@ -160,9 +164,9 @@ more than 5 minutes 21 seconds. See
 
 This benchmark is configured with command-line options; the few environment
 variables that apply are listed under
-[Environment Variables](./docs/usage.md#environment-variables). The common
-options are listed here; see the [full option list](./docs/usage.md#options)
-for all of them and their defaults:
+[Environment Variables](./docs/usage.md#environment-variables). The following
+options are the most common; see the
+[full option list](./docs/usage.md#options) for all of them and their defaults:
 
 - `-v` logs the detected CPUs, memory, caches, NUMA (Non-Uniform Memory
   Access) nodes, and the total runtime to stderr; `-vv` adds allocation,
@@ -247,8 +251,9 @@ the following operations in this fixed order; `-o` only filters them:
 The bandwidth operations run on all online CPUs as OpenMP threads, each with
 its own buffer on the NUMA node of the CPU it runs on. Each bandwidth
 measurement runs one discarded warmup, then three tries, and the best try is
-kept. See
-[Buffer Sizes](./docs/workloads.md#buffer-sizes) for how the sizes are
+kept.
+
+See [Buffer Sizes](./docs/workloads.md#buffer-sizes) for how the sizes are
 derived from the caches, and
 [Threads and Memory Placement](./docs/workloads.md#threads-and-memory-placement)
 for the thread count, calibration, and tries.
@@ -263,13 +268,21 @@ matched the copy convention of `bw_mem`. The container image was built from
 [`sc-images` repository](https://github.com/SpareCores/sc-images) from
 2026-01-05 until 2026-02-27, when the Dockerfile moved to this repository.
 
-The releases that followed added huge page support (1.0.1), measurements that
-run until a target time or a maximum iteration count (1.0.2), a new latency
-test adapted from `ram_bench`, plus macOS and BSD support (1.0.3), a rewrite of
-the bandwidth tests to OpenMP (1.1.0), the human-readable output and scores
-(1.2.0), a single binary per architecture built for its baseline instruction
-set (1.2.1), and a man page (1.2.2). Since 1.2.2, only the Docker build and
-CI changed, so the `:main` image runs 1.2.2 code.
+The releases that followed added the following:
+
+- 1.0.1: huge page support.
+- 1.0.2: measurements that run until a target time or a maximum iteration
+  count.
+- 1.0.3: a new latency test adapted from `ram_bench`, plus macOS and BSD
+  support.
+- 1.1.0: a rewrite of the bandwidth tests to OpenMP.
+- 1.2.0: the human-readable output and scores.
+- 1.2.1: a single binary per architecture, built for its baseline instruction
+  set.
+- 1.2.2: a man page.
+
+Since 1.2.2, only the Docker build and CI changed, so the `:main` image runs
+1.2.2 code.
 
 Earlier latency measurements with and without huge pages on an Azure and an
 AWS server type are kept with the release details in the
@@ -279,7 +292,7 @@ which version and settings produced them.
 ## References
 
 See the full list of [references](./docs/references.md) used in this
-documentation, [Building from Source](./docs/build.md) for the build
+documentation, [Building From Source](./docs/build.md) for the build
 dependencies, targets, and packaging status, and the
 [contributor guide](./docs/contributors.md) for the tests and the image
 build.

@@ -1,4 +1,4 @@
-# Building from Source
+# Building From Source
 
 ## Packages
 
@@ -23,8 +23,8 @@ A build with `hwloc` needs version 2.x; version 1.x has a different API and is
 not supported. Without `hwloc`, the tool reads the caches from `sysctl` on
 macOS and BSD, and from `/sys/devices/system/cpu/*/cache/` on Linux. Without
 `libnuma`, memory is allocated without NUMA awareness, so bandwidth may be
-lower on multi-socket servers. Without `libhugetlbfs`, the huge page size is read
-from `/proc/meminfo`.
+lower on multi-socket servers. Without `libhugetlbfs`, the huge page size is
+read from `/proc/meminfo`.
 
 ## Installing Dependencies
 
