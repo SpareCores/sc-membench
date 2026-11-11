@@ -48,9 +48,13 @@ also pushes a tag with the release version, but no release has been published
 since the image build was added, so no version tag exists yet. The `:main`
 image runs version 1.2.2 of the code, which `-V` prints.
 
-Without `-v`, a run prints nothing to stderr. With `-v`, the log looks as
-follows on an AWS (Amazon Web Services) `m7i.48xlarge` server
-([recorded log](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/m7i.48xlarge/0/membench/stderr)):
+Without `-v` or `-R`, a run prints nothing to stderr unless a latency buffer
+cannot be allocated. With `-v`, the log looks as follows on an AWS
+(Amazon Web Services) `m7i.48xlarge` server
+([recorded
+log](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/m7i.48xlarge/0/membench/stderr)):
+
+<!--TW note: add embed?-->
 
 ```text
 System: 192 CPUs, 743.94 GB memory
@@ -76,13 +80,15 @@ total test size" is printed but not used. See
 
 Install `membench` from a distribution package, or build it from source:
 
-- **Package:** sc-membench is packaged in some distributions; see
-  [Packages](./build.md#packages) for the packaging status.
+- **Package:** see [Packages](./build.md#packages) for the packaging status
+  of `sc-membench` across distributions.
 - **Source:** see [Building from Source](./build.md) for the dependencies per
   platform and the build targets. In short, on Debian or Ubuntu:
 
   ```bash
-  sudo apt-get install libhugetlbfs-dev libhwloc-dev libnuma-dev
+  git clone https://github.com/SpareCores/sc-membench
+  cd sc-membench
+  sudo apt-get install build-essential libhugetlbfs-dev libhwloc-dev libnuma-dev
   make full
   ./membench-full -v
   ```
@@ -113,7 +119,8 @@ options after the image name, as in [Running via Docker](#running-via-docker).
 See [Options](#options) for every option and its default.
 
 ```bash
-# Use huge pages for large buffers; recommended for benchmarking
+# Use huge pages for large buffers (with libnuma, only the latency chain and
+# one-thread bandwidth runs); recommended for benchmarking
 ./membench -H
 
 # The same, with a log that shows the detected system and the runtime
@@ -134,7 +141,7 @@ See [Options](#options) for every option and its default.
 # Try 1, 2, 4, and so on up to the CPU count, and keep the best per size
 ./membench -a
 
-# Extend the sweep with 512 MiB, 1 GiB, and larger sizes up to the memory limit
+# Extend the sweep with 512 MiB, 1 GiB, and larger sizes up to the sweep limit
 ./membench -f
 
 # Run only the read and latency operations
@@ -151,16 +158,45 @@ see [Environment Variables](#environment-variables).
 
 With `-H`, a buffer of at least twice the huge page size first tries explicit
 huge pages, then THP (Transparent Huge Pages), then regular pages; see
-[Huge Pages](./workloads.md#huge-pages). THP needs no root access and no
-setup. Explicit huge pages come from a pool that must be pre-allocated, and
-when that pool runs out, the buffer falls back to THP.
+[Huge Pages](./workloads.md#huge-pages). THP needs no pre-allocated pool, but
+it takes effect only when the host's THP mode, in
+`/sys/kernel/mm/transparent_hugepage/enabled`, is `madvise` or `always`, and
+the tool does not check that mode. Explicit huge pages come from a pool that
+must be pre-allocated, and when that pool runs out, the buffer falls back to
+THP.
 
-To pre-allocate explicit huge pages, as root:
+The `-vv` option logs the huge page path of each allocation. For THP, it
+shows only that the `madvise` call succeeded, not that the kernel used huge
+pages.
+
+With `libnuma`, as in the image, in `make numa` and `make full` builds, and
+in a plain `make` build that detects it, multi-thread bandwidth buffers never
+use huge pages; see [Huge Pages Scope](./limitations.md#huge-pages-scope).
+The pool then only has to hold the latency chain, which is capped at 2 GiB or a quarter of the
+RAM, whichever is smaller. When the thread count is 1, the bandwidth buffers
+also come from the pool: the size, and twice that for copy.
+
+To pre-allocate explicit huge pages of 2 MiB for the latency test, as root:
 
 ```bash
 # Check current huge page status
 grep Huge /proc/meminfo
 
+# LATENCY tests run single-threaded, on a chain of at most 2 GiB:
+#   256 MiB buffer: 256 / 2 = 128 pages (256 MB)
+#   2 GiB chain (the cap): 2,048 / 2 = 1,024 pages (2 GB)
+
+# Allocate huge pages (requires root) - adjust for your system
+echo 1024 | sudo tee /proc/sys/vm/nr_hugepages
+
+# Run with huge pages (will use explicit huge pages if available)
+./membench -H -v
+```
+
+A binary built without `libnuma` also takes its multi-thread bandwidth
+buffers from the pool. Size the pool for them as follows:
+
+```bash
 # Calculate huge pages needed for BANDWIDTH tests (read/write/copy):
 #   threads × buffer_size × 2 (for copy: src+dst) / 2MB
 #
@@ -168,26 +204,19 @@ grep Huge /proc/meminfo
 #   8 CPUs,  256 MiB buffer:   8 × 256 × 2 / 2 =  2,048 pages (4 GB)
 #   64 CPUs, 256 MiB buffer:  64 × 256 × 2 / 2 = 16,384 pages (32 GB)
 #  192 CPUs, 256 MiB buffer: 192 × 256 × 2 / 2 = 49,152 pages (96 GB)
-#
-# LATENCY tests run single-threaded, so need much less:
-#   256 MiB buffer: 256 / 2 = 128 pages (256 MB)
 
 # Allocate huge pages (requires root) - adjust for your system
 echo 49152 | sudo tee /proc/sys/vm/nr_hugepages
-
-# Run with huge pages (will use explicit huge pages if available)
-./membench -H -v
 ```
 
-The bandwidth sizing applies only to a binary built without `libnuma`. With
-`libnuma`, as in the image and in `make numa` and `make full` builds,
-multi-thread bandwidth buffers never use huge pages, so only the latency
-sizing applies; see [Huge Pages Scope](./limitations.md#huge-pages-scope).
+With `libnuma`, skip this sizing: the latency pool above is all a run
+needs.
 
 ## Run Duration
 
-Production runs of version 1.2.2 that ended with exit code 0 (2,317 runs)
-took the following times, read from the `Total runtime` line of their stderr:
+Production runs of version 1.2.2 whose `meta.json` records an `exit_code` of 0
+(2,317 runs) took the following times, read from the `Total runtime` line of
+their stderr:
 
 | Run | Duration | Server type |
 | --- | --- | --- |
@@ -281,8 +310,10 @@ copy. See [Results](../README.md#results) for an example.
 
 Bandwidth drops and latency rises as the buffer size passes each cache level:
 
-- The first change is at the L1d boundary, typically 32-64KB per thread.
-- The next is at the L2 boundary, typically 256KB-1MB per thread.
+- The first change is at the L1d boundary: the L1d size on the `Cache` line
+  of the `-v` log, such as 64 KiB per thread on an AWS `c8g.medium` server.
+- The next is at the L2 boundary: the L2 size on the same line, such as
+  2 MiB per thread on that server.
 - The last comes when the memory in use exceeds the L3 cache, which depends
   on the thread count: a bandwidth row uses `size_kb` times `threads`, while
   latency runs on one thread.
@@ -302,9 +333,15 @@ The Navigator reads only the CSV and publishes four metrics from it, each per
 - `membench:latency` in nanoseconds, where lower is better
 
 For each metric, it also publishes one RAM value: the first row whose
-per-thread `size_kb` exceeds the server's total CPU cache, which is the L3
-cache if the server has one, else L2, else L1d. The comparison uses the
+per-thread `size_kb` exceeds the total size of the server's last cache
+level, as the Navigator records it for the server type. That is the total of
+the L3 caches, else of the L2 caches, else of the L1d caches, not the size
+of one L3 cache that the sweep uses; see
+[Cache Detection](./limitations.md#cache-detection). The comparison uses the
 per-thread size, not `size_kb` times `threads`.
+
+When no row exceeds that total, or the Navigator has no cache size for the
+server type, no RAM value is published.
 
 The `-R` summary and scores are not published; production does not pass
 `-R`. Results of versions before 1.2.2 are still published, with the version
@@ -364,8 +401,8 @@ Options:
               (disables the sweep; -t is ignored)
   -r TRIES    Tries per bandwidth test, best kept (default: 3, at least 1;
               not used for latency)
-  -f          Full sweep: add 512 MiB, 1 GiB, ... up to the memory limit
-              (at most 18 sizes)
+  -f          Full sweep: add 512 MiB, 1 GiB, ... up to the sweep limit
+              (half of the RAM / threads; at most 18 sizes)
   -p THREADS  Use exactly this many threads for bandwidth (default: online CPUs)
   -a          Auto-scaling: try 1, 2, 4, ... up to the CPU count per size
               and bandwidth operation, keep the best

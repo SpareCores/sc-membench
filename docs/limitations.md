@@ -18,7 +18,8 @@ CPU.
 
 The tool reads the CPU count and the RAM size of the host, not the limits of
 the container. Docker's `--cpus` and `--memory` options do not change the
-thread count, the memory limit of the sweep, or the memory guard.
+thread count, the [sweep limit](./workloads.md#buffer-sizes), or the memory
+guard.
 
 ### Bandwidth Unit
 
@@ -107,9 +108,18 @@ The `-t` limit is soft: it is checked only after each measurement ends, so a
 run can pass it by the length of one measurement. It is ignored with `-s`.
 The tool handles no signals.
 
-The exit code is 0 after every run. A measurement whose buffers cannot be
-allocated prints no row, and only `-v` logs the failure, so check that the
-output has a row for each expected size and operation.
+The exit code is 0 after every run that starts measuring; an invalid or
+unknown option exits with 1 before that. A measurement whose buffers cannot
+be allocated prints no row. Only `-v` logs a failed bandwidth allocation; a
+failed latency allocation is always logged.
+
+To find a dropped measurement, run with `-v` and compare the output with the
+log. The `Testing N buffer sizes` line gives the number of sizes, and the
+`Cache` line gives the cache sizes from which the table in
+[Buffer Sizes](./workloads.md#buffer-sizes) derives them. A size with fewer
+rows than the operations selected (four by default), or fewer sizes than
+that line announces, marks a dropped measurement or a stop at the `-t`
+limit, which the log reports as `Time limit reached`.
 
 ### Older Production Results
 

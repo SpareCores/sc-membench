@@ -22,14 +22,16 @@ the detected L1d, L2, and L3 cache sizes ([`membench.c`](../membench.c),
 | 4 × L3 | RAM |
 
 Each size is rounded to the nearest power of 2. A size is kept only if it is
-larger than the previous one and at most the memory limit, which is half of
-the RAM divided by the thread count. Most production runs tested all 10
-sizes: 2,290 tested 10, 73 tested 9, and 140 tested 8.
+larger than the previous one and at most the sweep limit, which is half of
+the RAM divided by the thread count.
+
+Of the 2,503 production runs of all versions with a recorded output, 2,290
+tested all 10 sizes, 73 tested 9, and 140 tested 8.
 
 The following options change the sizes:
 
-- `-f` adds 512 MiB, 1 GiB, and each further doubling up to the same memory
-  limit, with at most 18 sizes in total.
+- `-f` adds 512 MiB, 1 GiB, and each further doubling up to the sweep limit,
+  with at most 18 sizes in total.
 - `-s SIZE_KB` replaces the sweep with one size.
 
 The sizes are tested in ascending order, and each size runs read, write,
@@ -72,7 +74,9 @@ RAM size are those of the host; see
 
 **Memory guard:** The thread count is halved until the size times the thread
 count (times two for copy) is at most a quarter of the RAM. With `-a`, thread
-counts above that limit are skipped. For example, on `m7i.48xlarge`, copy at
+counts that would exceed it are skipped. The guard is stricter than the
+[sweep limit](#buffer-sizes), so a size between the two stays in the sweep
+and runs on fewer threads. For example, on `m7i.48xlarge`, copy at
 512 MiB ran on 96 of the 192 threads
 ([recorded output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/m7i.48xlarge/0/membench/stdout)).
 The `threads` column shows the count each row used.
@@ -170,9 +174,13 @@ following order:
 2. THP (Transparent Huge Pages), requested with `MADV_HUGEPAGE`
 3. regular pages
 
-Smaller buffers always use regular pages. The huge page size is read from
-`Hugepagesize` in `/proc/meminfo`, and is 2 MiB if that fails, which makes
-the threshold 4 MiB. THP needs no setup; to use explicit huge pages, see
+Smaller buffers always use regular pages. In the image, the huge page size
+is read from `Hugepagesize` in `/proc/meminfo`, and is 2 MiB if that fails,
+which makes the threshold 4 MiB. A binary built with `libhugetlbfs` asks
+that library for the size first.
+
+THP needs no pre-allocated pool, but the host's THP mode must be `madvise`
+or `always`, and the tool does not check it. To use explicit huge pages, see
 [Explicit Huge Pages](./usage.md#explicit-huge-pages).
 
 In the image, `-H` covers the latency chain and bandwidth runs with one
@@ -196,7 +204,7 @@ differences:
 | --- | --- | --- |
 | Parallelism | OpenMP threads, one buffer each | Processes (`fork`), one buffer each |
 | Size reported | Per-thread buffer size | Per-process buffer size |
-| Read | All of the data (`read`) | `rd` reads 25% at a 32-byte stride (indices 0, 4, 8, ... 124 of each 512-byte chunk); `frd` reads all |
+| Read | All of the data (`read`) | `rd` reads every fourth word, 25% of the buffer; `frd` reads all |
 | Copy reported | Buffer size / time | Buffer size / time |
 | Operations | All in one run; `-o` selects | One invocation per operation, such as `bw_mem 64m rd` and `bw_mem 64m wr` |
 | Output | CSV on stdout | Text on stderr |

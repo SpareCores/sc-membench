@@ -39,8 +39,11 @@ The [`Dockerfile`](../Dockerfile) works as follows:
 - The `resource-tracker` binary is copied from the image named by the
   `RESOURCE_TRACKER_IMAGE` build argument (default:
   `ghcr.io/sparecores/resource-tracker:main`).
-- The build context excludes `.git`, `.github`, Markdown files, the man page,
-  and built binaries ([`.dockerignore`](../.dockerignore)).
+- The build context excludes `.git`, `.github`, any Markdown files in the
+  repository root, the [`membench.1`](../membench.1) man page, and built
+  binaries ([`.dockerignore`](../.dockerignore)). The `docs/` pages and
+  `DESCRIPTION` stay in the context, and `COPY . .` copies them into the
+  build stage.
 
 The image workflow ([`docker.yml`](../.github/workflows/docker.yml)) builds
 `linux/amd64` and `linux/arm64` images on native runners, with zstd-compressed

@@ -41,6 +41,12 @@ and of the `-h` usage text against the code:
 - `--privileged` is needed for the `nice -n -20` entrypoint.
 - `-V` was added to the documented options.
 
+The macOS install steps also changed. The previous `README.md` gave
+`brew install hwloc libomp` and `xcode-select --install`, for a build with
+Apple clang, and the help text of the `Makefile` still names
+`brew install hwloc libomp`. The docs now give the Homebrew LLVM steps that
+CI uses, because Apple clang ships no OpenMP.
+
 ### Multi-Platform CI
 
 CI builds every variant and runs a smoke test on Linux x86_64 and arm64,
@@ -126,7 +132,8 @@ Released 2026-01-05. The first version had the following features:
 ## Experiments That Informed the Design
 
 The measurements in this section come from the `README.md` of earlier
-versions. Which version and settings produced them was not recorded.
+versions. That `README.md` did not state which version and
+settings produced them.
 
 ### Huge Pages and Latency
 
@@ -184,6 +191,10 @@ entries, so random pointer chasing causes frequent TLB misses, each adding
 spans 64 pages. Bandwidth tests improve less because sequential access has
 better TLB locality, hardware prefetchers hide TLB miss latency, and the
 memory bus is already saturated.
+
+That explanation does not apply to a build with `libnuma`: its multi-thread
+bandwidth buffers bypass `-H`, so huge pages could not change their
+bandwidth; see [Documentation Rewrite](#documentation-rewrite).
 
 ### Result Variability
 
@@ -277,3 +288,6 @@ systems, without a source:
 | L2 cache | 100-200 GB/s | 3-10 ns |
 | L3 cache | 50-100 GB/s | 10-40 ns (larger/3D V-Cache may be higher) |
 | Main memory | 20-100 GB/s (DDR4/DDR5, depends on channels) | 25-50 ns (fast DDR5) to 60-120 ns (DDR4) |
+
+The previous `README.md` also placed the L1 boundary at "32-64KB per thread
+typically" and the L2 boundary at "256KB-1MB per thread typically".

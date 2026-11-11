@@ -2,9 +2,9 @@
 
 ## Packages
 
-sc-membench is packaged in some distributions. For the current packaging
-status and versions across repositories, see
-[repology.org/project/sc-membench/versions](https://repology.org/project/sc-membench/versions).
+For the distributions that package `sc-membench` and the versions they
+carry, see the
+[Repology packaging status](https://repology.org/project/sc-membench/versions).
 
 ## Requirements
 
@@ -44,34 +44,34 @@ yum install gcc make hwloc-devel numactl-devel libhugetlbfs-devel
 # RHEL/CentOS/Fedora - Runtime only
 yum install libgomp hwloc-libs numactl-libs libhugetlbfs
 
-# macOS (hwloc only, no NUMA)
-brew install hwloc libomp
-xcode-select --install
+# macOS (hwloc only, no NUMA): Homebrew LLVM clang, as Apple clang has no OpenMP
+brew install llvm hwloc
+export CC="$(brew --prefix llvm)/bin/clang"
+export LIBRARY_PATH="$(brew --prefix llvm)/lib"
 
 # FreeBSD (hwloc 2 required, not hwloc 1)
 pkg install gmake hwloc2
 ```
 
-CI installs them as follows ([`ci.yml`](../.github/workflows/ci.yml)). On
-macOS, CI uses Homebrew LLVM clang, because Apple clang has no OpenMP:
+CI ([`ci.yml`](../.github/workflows/ci.yml)) installs them as follows; on
+macOS, it uses the recipe above:
 
 ```bash
 # Ubuntu
-sudo apt-get update && sudo apt-get install -y build-essential libhwloc-dev libnuma-dev libhugetlbfs-dev
-
-# macOS: Apple clang has no OpenMP, so use Homebrew LLVM
-brew install llvm hwloc
-export CC="$(brew --prefix llvm)/bin/clang"
-export LIBRARY_PATH="$(brew --prefix llvm)/lib"
+sudo apt-get update && sudo apt-get install -y libhwloc-dev libnuma-dev libhugetlbfs-dev
 
 # FreeBSD
 pkg install -y gmake hwloc2
 ```
 
+**Note:** On Ubuntu, CI installs `libhwloc-dev`, `libnuma-dev`, and
+`libhugetlbfs-dev`, without `build-essential`.
+
 ## Build Targets
 
-Build one of the following targets (with `gmake` on FreeBSD). Each comment
-names the binary it builds:
+Build one of the following targets (with `gmake` on FreeBSD) in a clone of
+the [`sc-membench` repository](https://github.com/SpareCores/sc-membench).
+Each comment names the binary it builds:
 
 ```bash
 make              # membench: links hwloc, libnuma, and libhugetlbfs when detected
@@ -97,9 +97,13 @@ every CPU of the architecture.
 For production use on servers, build with all features:
 
 ```bash
+# Get the source
+git clone https://github.com/SpareCores/sc-membench
+cd sc-membench
+
 # Install dependencies first
-sudo apt-get install libhugetlbfs-dev libhwloc-dev libnuma-dev  # Debian/Ubuntu
-# or: sudo yum install libhugetlbfs-devel hwloc-devel numactl-devel  # RHEL/CentOS
+sudo apt-get install build-essential libhugetlbfs-dev libhwloc-dev libnuma-dev  # Debian/Ubuntu
+# or: sudo yum install gcc make libhugetlbfs-devel hwloc-devel numactl-devel  # RHEL/CentOS
 
 # Build with full features
 make full

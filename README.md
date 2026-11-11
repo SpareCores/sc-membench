@@ -9,6 +9,11 @@ level and RAM.
 At each size, this benchmark reports the aggregate read, write, and copy
 bandwidth of all CPUs, and the latency of a single thread chasing pointers
 through the buffer in random order, as one CSV row per size and operation.
+It measures CPU memory local to the NUMA (Non-Uniform Memory Access) node of
+each thread, not access across NUMA nodes, per-thread or per-node bandwidth,
+or GPU memory, which
+[`nvbandwidth`](https://github.com/SpareCores/sc-images/tree/main/images/nvbandwidth)
+measures.
 
 ## Purpose
 
@@ -60,6 +65,21 @@ portable, compiler-generated code. The main limitations are the following:
 - **[Container Limits](./docs/limitations.md#container-limits):** The CPU
   count and RAM size come from the host, not from Docker's `--cpus` or
   `--memory` limits.
+- **[Bandwidth Unit](./docs/limitations.md#bandwidth-unit):** The
+  `bandwidth_mb_s` column is in MiB/s, although its name and the Navigator
+  label it MB/s.
+- **[Aggregate Bandwidth](./docs/limitations.md#aggregate-bandwidth):** The
+  bandwidth is the total bytes of all threads divided by the time of the
+  slowest thread, not a sum of per-thread bandwidths.
+- **[Thread Placement](./docs/limitations.md#thread-placement):** The
+  `OMP_NUM_THREADS` and `OMP_PROC_BIND` variables do not change the bandwidth
+  operations, and thread 0 stays on CPU 0 after the first latency test.
+- **[Memory Guard](./docs/limitations.md#memory-guard):** At sizes where the
+  buffers of all threads would exceed a quarter of the RAM, the thread count
+  is halved until they fit, so the rows of one run can differ in `threads`.
+- **[Latency Sampling](./docs/limitations.md#latency-sampling):** Sampling
+  stops at 21 samples even when they still vary more than the 5% target, and
+  latency is measured once per size, on CPU 0 only.
 - **[Huge Pages Scope](./docs/limitations.md#huge-pages-scope):** In the
   image, `-H` applies only to the latency chain and single-thread bandwidth
   runs.
@@ -85,10 +105,18 @@ the image name go to `membench`, for example `-v` for a log on stderr. The
 image is built for `linux/amd64` and `linux/arm64`, and `:main` is the tag to
 use; it runs version 1.2.2 of the code.
 
-To run the tool without Docker, install a distribution package (see
-[Packages](./docs/build.md#packages)) or build it from source:
+To run the tool without Docker, check the
+[packaging status](./docs/build.md#packages) for a distribution package, or
+build it from source:
 
 ```bash
+# Get the source
+git clone https://github.com/SpareCores/sc-membench
+cd sc-membench
+
+# Install the compiler and the libraries (Debian/Ubuntu)
+sudo apt-get install build-essential libhugetlbfs-dev libhwloc-dev libnuma-dev
+
 # Build (links hwloc, libnuma, and libhugetlbfs when they are installed)
 make
 
@@ -102,7 +130,6 @@ make
 ./membench -s 1024
 
 # Build with hwloc and libnuma (recommended for servers), and use huge pages
-sudo apt-get install libhugetlbfs-dev libhwloc-dev libnuma-dev  # Debian/Ubuntu
 make full
 ./membench-full -H -v
 ```
@@ -140,8 +167,8 @@ for all of them and their defaults:
 - `-t SECONDS` stops the sweep after the first measurement that ends past the
   limit (default: unlimited).
 - `-s SIZE_KB` tests one per-thread size in KiB instead of the sweep; `-f`
-  extends the sweep with 512 MiB, 1 GiB, and larger sizes up to the memory
-  limit.
+  extends the sweep with 512 MiB, 1 GiB, and larger sizes up to the
+  [sweep limit](./docs/workloads.md#buffer-sizes).
 - `-o OP` runs only `read`, `write`, `copy`, or `latency`; repeat it for more
   than one.
 - `-p THREADS` fixes the thread count, and `-a` tries 1, 2, 4, and so on up
@@ -233,14 +260,15 @@ set (1.2.1), and a man page (1.2.2). Since 1.2.2, only the Docker build and
 CI changed, so the `:main` image runs 1.2.2 code.
 
 Earlier latency measurements with and without huge pages on an Azure and an
-AWS server type, whose version and settings were not recorded, are kept with
-the release details in the [changelog](./CHANGELOG.md).
+AWS server type are kept with the release details in the
+[changelog](./CHANGELOG.md). Earlier versions of these docs did not state
+which version and settings produced them.
 
 ## References
 
 See the full list of [references](./docs/references.md) used in this
 documentation, [Building from Source](./docs/build.md) for the build
-dependencies, targets, and distribution packages, and the
+dependencies, targets, and packaging status, and the
 [contributor guide](./docs/contributors.md) for the tests and the image
 build.
 
