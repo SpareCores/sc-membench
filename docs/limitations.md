@@ -23,11 +23,11 @@ guard.
 
 ### Bandwidth Unit
 
-The code divides bytes by 1,048,576, so `bandwidth_mb_s` is in MiB/s. The
-column name, the usage text, and the label in
+The code divides bytes by 1,048,576, so `bandwidth_mb_s` is in mebibytes per
+second (MiB/s). The column name, the usage text, and the label in
 [Spare Cores Navigator](https://docs.sparecores.com/overview) call it MB/s. The
-`-R` table divides the MiB/s value by 1,000 for each larger label, so a value shown as
-"GB/s" is in units of 1,000 MiB/s.
+`-R` table divides the MiB/s value by 1,000 for each larger label, so a value
+shown as "GB/s" is in units of 1,000 MiB/s.
 
 The `size_kb` column is in KiB (bytes divided by 1,024).
 

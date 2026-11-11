@@ -23,7 +23,7 @@ among them the
 [memory bandwidth](https://github.com/SpareCores/sc-images/blob/main/images/benchmark/docs/bw-mem.md)
 measured with LMbench's `bw_mem`.
 
-We ran `bw_mem` across 3,000+ cloud server
+We ran `bw_mem` across 3000+ cloud server
 types, and the results were not always consistent with the detected L1d, L2,
 and L3 cache sizes. Some inconsistencies came from cache detection, which
 relied on `lscpu` output that is sometimes wrong or incomplete; others traced
@@ -72,8 +72,8 @@ following:
   count and RAM size come from the host, not from Docker's `--cpus` or
   `--memory` limits.
 - **[Bandwidth Unit](./docs/limitations.md#bandwidth-unit):** The
-  `bandwidth_mb_s` column is in MiB/s, although its name and the Navigator
-  label it MB/s.
+  `bandwidth_mb_s` column is in mebibytes per second (MiB/s), although its
+  name and the Navigator label it MB/s.
 - **[Aggregate Bandwidth](./docs/limitations.md#aggregate-bandwidth):** The
   bandwidth is the total bytes of all threads divided by the time of the
   slowest thread, not a sum of per-thread bandwidths.
@@ -187,8 +187,8 @@ options are the most common; see the
 ### Results
 
 Rows are printed to stdout as each measurement ends, one per size and
-operation, with the aggregate bandwidth of all threads in MiB/s (see
-[Bandwidth Unit](./docs/limitations.md#bandwidth-unit)) and the latency in
+operation, with the aggregate bandwidth of all threads in mebibytes per second
+(MiB/s; see [Bandwidth Unit](./docs/limitations.md#bandwidth-unit)) and the latency in
 nanoseconds. See [CSV Output](./docs/usage.md#csv-output) for all columns,
 [Reading the Results](./docs/usage.md#reading-the-results) for where the cache
 levels show, and
@@ -201,8 +201,8 @@ For example, a production run on an AWS (Amazon Web Services)
 from 32 KiB to 128 MiB in 56 seconds
 ([recorded output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.medium/0/membench/stdout)).
 The rows of three of its sizes follow: the first size (32 KiB), the L3 size
-(36 MiB, rounded to 32 MiB), and the largest size (4 × L3, rounded to
-128 MiB):
+(36 MiB, rounded to the nearest power of 2, 32 MiB), and the largest size
+(4 × L3, rounded to 128 MiB):
 
 ```text
 size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,threads,iterations,elapsed_s
@@ -225,8 +225,8 @@ size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,th
 <!-- embed -->
 [Memory Bandwidth of c8g.medium](https://sparecores.com/embed/server/aws/c8g.medium/bw_mem)
 
-Read bandwidth falls from \~73 GiB/s in L1d to \~26 GiB/s at 128 MiB, and
-latency rises from 2.16 ns to 110.84 ns. The 32 MiB latency row stopped at
+Read bandwidth falls from 74,949 MiB/s (\~73 GiB/s) at 32 KiB to 27,008 MiB/s
+(\~26 GiB/s) at 128 MiB, and latency rises from 2.16 ns to 110.84 ns. The 32 MiB latency row stopped at
 the 21-sample limit with a CV (Coefficient of Variation) of about 10%, above
 the 5% target. The CV is `latency_stddev_ns` divided by `latency_ns`. The
 16 MiB row, not shown, stopped there too, at about 16%. See

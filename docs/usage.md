@@ -75,7 +75,9 @@ Total runtime: 350.7 seconds
 
 Note that the L3 size on the `Cache` line is the size of one shared L3 cache,
 although the line labels all three sizes "(per core)", and that the "Minimum
-total test size" is printed but not used. See
+total test size" is printed but not used. The "KB" of the cache sizes is KiB:
+the code divides bytes by 1,024
+([`membench.c`](../membench.c#L979-L982)). See
 [Cache Detection](./workloads.md#cache-detection) for what the sizes mean.
 
 ## Running Without Docker
@@ -174,8 +176,8 @@ different one.
 With `libnuma`, as in the image, in `make numa` and `make full` builds, and
 in a plain `make` build that detects it, multi-thread bandwidth buffers never
 use huge pages; see [Huge Pages Scope](./limitations.md#huge-pages-scope).
-The pool then only has to hold the latency chain, which is capped at 2 GiB or a quarter of the
-RAM, whichever is smaller. When the thread count is 1, the bandwidth buffers
+The pool then only has to hold the latency chain, which is capped at 2 GiB or a
+quarter of the RAM, whichever is smaller. When the thread count is 1, the bandwidth buffers
 also come from the pool: the size, and twice that for copy.
 
 To pre-allocate explicit huge pages of 2 MiB for the latency test, as root:
@@ -185,10 +187,10 @@ To pre-allocate explicit huge pages of 2 MiB for the latency test, as root:
 grep Huge /proc/meminfo
 
 # LATENCY tests run on one thread, on a chain of at most 2 GiB:
-#   256 MiB buffer: 256 / 2 = 128 pages (256 MB)
-#   2 GiB chain (the cap): 2,048 / 2 = 1,024 pages (2 GB)
+#   256 MiB buffer: 256 / 2 = 128 pages (256 MiB)
+#   2 GiB chain (the cap): 2,048 / 2 = 1,024 pages (2 GiB)
 
-# Allocate huge pages (requires root) - adjust for your system
+# Allocate huge pages (requires root); adjust for the host
 echo 1024 | sudo tee /proc/sys/vm/nr_hugepages
 
 # Run with huge pages (will use explicit huge pages if available)
@@ -200,14 +202,14 @@ buffers from the pool. Size the pool for them as follows:
 
 ```bash
 # Calculate huge pages needed for BANDWIDTH tests (read/write/copy):
-#   threads × buffer_size × 2 (for copy: src+dst) / 2MB
+#   threads × buffer_size × 2 (for copy: src+dst) / 2 MiB
 #
 # Examples:
-#   8 CPUs,  256 MiB buffer:   8 × 256 × 2 / 2 =  2,048 pages (4 GB)
-#   64 CPUs, 256 MiB buffer:  64 × 256 × 2 / 2 = 16,384 pages (32 GB)
-#  192 CPUs, 256 MiB buffer: 192 × 256 × 2 / 2 = 49,152 pages (96 GB)
+#   8 CPUs,  256 MiB buffer:   8 × 256 × 2 / 2 =  2,048 pages (4 GiB)
+#   64 CPUs, 256 MiB buffer:  64 × 256 × 2 / 2 = 16,384 pages (32 GiB)
+#  192 CPUs, 256 MiB buffer: 192 × 256 × 2 / 2 = 49,152 pages (96 GiB)
 
-# Allocate huge pages (requires root) - adjust for your system
+# Allocate huge pages (requires root); adjust for the host
 echo 49152 | sudo tee /proc/sys/vm/nr_hugepages
 ```
 
@@ -298,8 +300,8 @@ The columns are the following:
 
 - `size_kb` is the per-thread buffer size in KiB.
 - `operation` is `read`, `write`, `copy`, or `latency`.
-- `bandwidth_mb_s` is the aggregate bandwidth of all threads in MiB/s, and
-  `0` for latency rows.
+- `bandwidth_mb_s` is the aggregate bandwidth of all threads in mebibytes per
+  second (MiB/s), and `0` for latency rows.
 - `latency_ns` is the median time of one dependent load in nanoseconds,
   `latency_stddev_ns` the sample standard deviation of the latency samples,
   and `latency_samples` their count (7 to 21); all three are `0` for

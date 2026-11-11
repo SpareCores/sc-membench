@@ -34,7 +34,7 @@ the RAM divided by the thread count.
 
 Of the 2,503
 [production runs](./usage.md#production-setup) of all versions with a recorded
-output, 2,290 tested all 10 sizes, 73 tested 9, and 140 tested 8.
+output, 2,290 tested all 10 sizes, 73 tested nine, and 140 tested eight.
 
 The following options change the sizes:
 

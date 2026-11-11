@@ -163,18 +163,18 @@ L3=32MB/die):
 
 Key observations:
 
-- Small buffers (≤ 2MB): no significant difference; the TLB can handle the
-  page count.
-- L3 boundary effect: AMD shows 63% improvement at 32MB (exactly at L3 size).
+- Small buffers (up to 2 MB): no significant difference; the TLB can handle
+  the page count.
+- L3 boundary effect: AMD shows 63% improvement at 32 MB (exactly at L3 size).
   Without huge pages, TLB misses make L3 appear like RAM.
 - L3 region: 12-19% improvement with huge pages.
 - RAM region: 10-16% lower latency with huge pages.
 - THP works automatically: no pre-allocation needed.
 
-At the time, the difference was explained as follows. With 4KB pages,
+At the time, the difference was explained as follows. With 4 KB pages,
 a 128 MB buffer spans 32,768 pages, which cannot fit in a TLB of \~1000-2000
 entries, so random pointer chasing causes frequent TLB misses, each adding
-10-20+ CPU cycles for a page table walk. With 2MB huge pages, the same buffer
+10-20+ CPU cycles for a page table walk. With 2 MB huge pages, the same buffer
 spans 64 pages. Bandwidth tests improve less because sequential access has
 better TLB locality, hardware prefetchers hide TLB miss latency, and the
 memory bus is already saturated.
@@ -194,7 +194,7 @@ without them.
 
 An earlier version produced the following output on
 [Azure D96pls_v6](https://sparecores.com/server/azure/Standard_D96pls_v6)
-(96 Arm cores, 64KB L1, 1MB L2, 128MB L3):
+(96 Arm cores, 64 KB L1, 1 MB L2, 128 MB L3):
 
 ```csv
 size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,threads,iterations,elapsed_s
@@ -213,12 +213,12 @@ size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,th
 
 The rows read as follows:
 
-- 32KB: fits in L1, with very high bandwidth (\~9.3 TB/s read) and low
-  latency (\~1.8ns, stddev 0.00)
-- 512KB: fits in L2, with good latency (\~5.7ns, stddev 0.01)
-- 32MB: in L3, with moderate latency (\~45ns, stddev 0.03)
-- 128MB: at the L3 boundary, where RAM latency is visible (\~97ns, stddev 3.0)
-- 256MB: past L3, with pure RAM latency (\~122ns, stddev 0.9)
+- 32 KB: fits in L1, with very high bandwidth (\~9.3 TB/s read) and low
+  latency (\~1.8 ns, stddev 0.00)
+- 512 KB: fits in L2, with good latency (\~5.7 ns, stddev 0.01)
+- 32 MB: in L3, with moderate latency (\~45 ns, stddev 0.03)
+- 128 MB: at the L3 boundary, where RAM latency is visible (\~97 ns, stddev 3.0)
+- 256 MB: past L3, with pure RAM latency (\~122 ns, stddev 0.9)
 
 ### Example Human-Readable Output
 
