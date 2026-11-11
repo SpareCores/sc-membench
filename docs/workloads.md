@@ -164,7 +164,8 @@ or prefetch the accesses. The method is pointer chasing, based on
 
 At small sizes, this measures the hit latency of the L1d, L2, and L3 caches,
 and at large sizes the RAM latency. Latency runs on one thread and is
-measured once per size: it has no discarded warmup run, and `-r` does not
+measured once per size: apart from the warmup traversal in step 4, it has no
+discarded warmup run, unlike the bandwidth operations, and `-r` does not
 apply. The order of the nodes differs between runs, because the shuffle is
 seeded from the time.
 
