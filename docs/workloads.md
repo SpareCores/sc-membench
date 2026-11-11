@@ -4,9 +4,11 @@
 
 Every size is the buffer size of *one* thread, so the memory in use is the
 size times the thread count, and twice that for copy, which needs a source and
-a destination buffer. The default size sweep derives the following sizes from
-the detected L1d, L2, and L3 cache sizes ([`membench.c`](../membench.c),
-`get_sizes`):
+a destination buffer. For example, at 1 MiB with four threads, read and write
+use 4 MiB in total, and copy uses 8 MiB.
+
+The default size sweep derives the following sizes from the detected L1d, L2,
+and L3 cache sizes ([`membench.c`](../membench.c), `get_sizes`):
 
 | Size | What it shows |
 | --- | --- |
@@ -116,19 +118,22 @@ the architecture; see [Plain C Loops](./limitations.md#plain-c-loops).
 ## Read
 
 Every thread reads all 64-bit words of its buffer and XORs them into eight
-independent accumulators, 256 bytes per loop iteration.
+independent accumulators, 256 bytes per loop iteration
+([`membench.c`](../membench.c), `mem_read`).
 
 ## Write
 
-Every thread stores one 64-bit pattern to all words of its buffer.
+Every thread stores one 64-bit pattern to all words of its buffer
+([`membench.c`](../membench.c), `mem_write`).
 
 ## Copy
 
 Every thread copies its source buffer to its destination buffer one 64-bit
-word at a time. The bandwidth counts the buffer size once per iteration, not
-the bytes read plus the bytes written, which is the convention of `bw_mem`.
-Because each iteration both reads and writes the buffer size, copy bandwidth
-is typically lower than read or write bandwidth.
+word at a time ([`membench.c`](../membench.c), `mem_copy`). The bandwidth
+counts the buffer size once per iteration, not the bytes read plus the bytes
+written, which is the convention of `bw_mem`. Because each iteration both
+reads and writes the buffer size, copy bandwidth is typically lower than read
+or write bandwidth.
 
 ## Latency
 
@@ -141,8 +146,8 @@ or prefetch the accesses. The method is pointer chasing, based on
 1. Pin the thread to CPU 0, so that the scheduler cannot move it during the
    measurement. On a host with more than one NUMA node, bind the memory to
    the node of CPU 0.
-2. Fill a buffer of the current size with nodes of 16 bytes, each a payload
-   and a pointer to the next node, with at least 64 nodes.
+2. Fill a buffer of the current size with nodes of 16 bytes (`LatencyNode`),
+   each a payload and a pointer to the next node, with at least 64 nodes.
 3. Link the nodes in random order into one cycle that visits every node, so
    that hardware prefetchers cannot predict the next address.
 4. Traverse the chain once as a warmup, and once more to calibrate how many
