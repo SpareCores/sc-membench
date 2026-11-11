@@ -169,8 +169,8 @@ or prefetch the accesses. The method is pointer chasing, based on
 1. Pin the thread to CPU 0, so that the scheduler cannot move it during the
    measurement. On a host with more than one NUMA node, bind the memory to
    the node of CPU 0.
-2. Fill a buffer of the current size with nodes of 16 bytes (`LatencyNode`),
-   each a payload and a pointer to the next node, with at least 64 nodes.
+2. Fill a buffer of the current size with at least 64 nodes of 16 bytes
+   (`LatencyNode`), each holding a payload and a pointer to the next node.
 3. Link the nodes in random order into one cycle that visits every node, so
    that hardware prefetchers cannot predict the next address.
 4. Traverse the chain once as a warmup, and once more to calibrate how many

@@ -109,8 +109,8 @@ changes only the latency rows and the bandwidth rows whose `threads` value is
 - in the first step of `-a`
 - when the memory guard halves the thread count down to 1
 
-The huge page size comes from `/proc/meminfo`; the image is built without
-`libhugetlbfs`.
+The image is built without `libhugetlbfs`, so the huge page size comes from
+`/proc/meminfo`.
 
 ### Time Limit and Exit Code
 

@@ -134,7 +134,7 @@ See [Options](#options) for every option and its default.
 # Run each bandwidth measurement 5 times instead of 3, and keep the best
 ./membench -r 5
 
-# Run each bandwidth measurement once: the fastest run
+# Run each bandwidth measurement once, for the shortest runtime
 ./membench -r 1
 
 # Use exactly 16 threads for the bandwidth operations
@@ -301,19 +301,17 @@ size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,th
 
 The columns are the following:
 
-- `size_kb` is the per-thread buffer size in KiB.
-- `operation` is `read`, `write`, `copy`, or `latency`.
-- `bandwidth_mb_s` is the aggregate bandwidth of all threads in mebibytes per
-  second (MiB/s), and `0` for latency rows.
-- `latency_ns` is the median time of one dependent load in nanoseconds,
-  `latency_stddev_ns` the sample standard deviation of the latency samples,
-  and `latency_samples` their count (7 to 21); all three are `0` for
-  bandwidth rows.
-- `threads` is the thread count used, always `1` for latency.
-- `iterations` is the number of passes over the buffer per thread in the kept
-  try for bandwidth rows, and the sample count for latency rows.
-- `elapsed_s` is the timed loop of the slowest thread for bandwidth rows, and
-  the wall time including chain allocation for latency rows.
+| Column | Meaning |
+| --- | --- |
+| `size_kb` | The per-thread buffer size in KiB. |
+| `operation` | `read`, `write`, `copy`, or `latency`. |
+| `bandwidth_mb_s` | The aggregate bandwidth of all threads in mebibytes per second (MiB/s), and `0` for latency rows. |
+| `latency_ns` | The median time of one dependent load in nanoseconds, and `0` for bandwidth rows. |
+| `latency_stddev_ns` | The sample standard deviation of the latency samples, and `0` for bandwidth rows. |
+| `latency_samples` | The count of the latency samples (7 to 21), and `0` for bandwidth rows. |
+| `threads` | The thread count used, always `1` for latency. |
+| `iterations` | The number of passes over the buffer per thread in the kept try for bandwidth rows, and the sample count for latency rows. |
+| `elapsed_s` | The duration of the timed loop of the slowest thread for bandwidth rows, and the wall time including chain allocation for latency rows. |
 
 The memory in use for a row is `size_kb` times `threads`, and twice that for
 copy. See [Results](../README.md#results) for an example.

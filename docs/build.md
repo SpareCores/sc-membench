@@ -71,7 +71,8 @@ pkg install -y gmake hwloc2
 
 Build one of the following targets (with `gmake` on FreeBSD) in a clone of
 the [`sc-membench` repository](https://github.com/SpareCores/sc-membench).
-Each comment names the binary it builds:
+Each comment says what the target does, and names the binary it builds where
+there is one:
 
 ```bash
 make              # membench: links hwloc, libnuma, and libhugetlbfs when detected
@@ -87,10 +88,10 @@ make info         # print the detected configuration
 make clean        # remove the built binaries
 ```
 
-Set `CC` to use another compiler. The flags are
-`-O3 -Wall -Wextra -std=c11 -fopenmp`, with `-march=x86-64 -mtune=generic` on
-Linux x86_64 and `-mcpu=generic+crc` on aarch64 (arm64), so that one binary
-runs on every CPU of the architecture.
+Set `CC` to use another compiler. The compiler flags are `-O3`, `-Wall`,
+`-Wextra`, `-std=c11`, and `-fopenmp`, with `-march=x86-64` and
+`-mtune=generic` on Linux x86_64 and `-mcpu=generic+crc` on aarch64 (arm64),
+so that one binary runs on every CPU of the architecture.
 
 ## Recommended Build
 

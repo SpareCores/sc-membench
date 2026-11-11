@@ -175,20 +175,22 @@ options are the most common; see the
   Production passes it.
 - `-t SECONDS` stops the sweep after the first measurement that ends past the
   limit (default: unlimited).
-- `-s SIZE_KB` tests one per-thread size in KiB instead of the sweep; `-f`
-  extends the sweep with 512 MiB, 1 GiB, and larger sizes up to the
+- `-s SIZE_KB` tests one per-thread size in KiB instead of the sweep.
+- `-f` extends the sweep with 512 MiB, 1 GiB, and larger sizes up to the
   [sweep limit](./docs/workloads.md#buffer-sizes).
 - `-o OP` runs only `read`, `write`, `copy`, or `latency`; repeat it for more
   than one.
-- `-p THREADS` fixes the thread count, and `-a` tries 1, 2, 4, and so on up
-  to the CPU count and keeps the best result per size.
+- `-p THREADS` fixes the thread count.
+- `-a` tries 1, 2, 4, and so on up to the CPU count and keeps the best result
+  per size.
 - `-R` prints a human-readable table, a summary, and scores instead of CSV.
 
 ### Results
 
 Rows are printed to stdout as each measurement ends, one per size and
 operation, with the aggregate bandwidth of all threads in mebibytes per second
-(MiB/s; see [Bandwidth Unit](./docs/limitations.md#bandwidth-unit)) and the latency in
+(MiB/s; see
+[Bandwidth Unit](./docs/limitations.md#bandwidth-unit)) and the latency in
 nanoseconds. See [CSV Output](./docs/usage.md#csv-output) for all columns,
 [Reading the Results](./docs/usage.md#reading-the-results) for where the cache
 levels show, and
