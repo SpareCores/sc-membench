@@ -219,8 +219,8 @@ the 5% target, and so did the 16 MiB row, not shown, with about 16%; see
 
 ## Workloads
 
-Each size runs the following operations in this fixed order; `-o` only
-filters them:
+All tests are in one C file, [`membench.c`](./membench.c). Each size runs
+the following operations in this fixed order; `-o` only filters them:
 
 - **[Read](./docs/workloads.md#read):** Every thread XORs all 64-bit words of
   its buffer into eight accumulators, 256 bytes per loop iteration.
