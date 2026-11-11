@@ -319,8 +319,8 @@ Bandwidth drops and latency rises as the buffer size passes each cache level:
   latency runs on one thread.
 
 Compare the `threads` column before comparing bandwidths at large sizes; see
-[Memory Guard](./limitations.md#memory-guard). Typical values from the
-previous `README.md` are kept in the changelog under
+[Memory Guard](./limitations.md#memory-guard). Typical values given for
+earlier versions, without a source, are kept in the changelog under
 [Typical Values](../CHANGELOG.md#typical-values).
 
 ## How the Navigator Uses the Results

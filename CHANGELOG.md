@@ -5,19 +5,10 @@
 No release has been published since 1.2.2, and `membench.c` has not changed,
 so the `:main` image runs 1.2.2 code.
 
-### Documentation Rewrite
+### Behavior Checked Against the Code
 
-`README.md` was rewritten as a brief manual, with the details in `docs/`
-pages, a `DESCRIPTION` file for the GHCR package page, and this changelog.
-The build instructions of the previous `README.md` moved to
-[`docs/build.md`](./docs/build.md), its usage examples and huge page
-pre-allocation steps to [`docs/usage.md`](./docs/usage.md), and its
-comparison with LMbench to [`docs/workloads.md`](./docs/workloads.md). Its
-huge page measurements and example outputs moved to
-[Experiments That Informed the Design](#experiments-that-informed-the-design).
-
-The rewrite corrected the following statements of the previous `README.md`
-and of the `-h` usage text against the code:
+The code of 1.2.2 behaves as follows, where earlier descriptions of the tool,
+including its `-h` usage text, said otherwise:
 
 - `bandwidth_mb_s` is computed in MiB/s (bytes divided by 1,048,576), not
   MB/s.
@@ -39,13 +30,11 @@ and of the `-h` usage text against the code:
 - Plain `make` detects and links `hwloc`, `libnuma`, and `libhugetlbfs`;
   `make basic` is the minimal build.
 - `--privileged` is needed for the `nice -n -20` entrypoint.
-- `-V` was added to the documented options.
+- `-V` prints the version and exits.
 
-The macOS install steps also changed. The previous `README.md` gave
-`brew install hwloc libomp` and `xcode-select --install`, for a build with
-Apple clang, and the help text of the `Makefile` still names
-`brew install hwloc libomp`. The docs now give the Homebrew LLVM steps that
-CI uses, because Apple clang ships no OpenMP.
+On macOS, CI builds with Homebrew LLVM clang, because Apple clang ships no
+OpenMP; the help text of the `Makefile` still names
+`brew install hwloc libomp`, for a build with Apple clang.
 
 ### Multi-Platform CI
 
@@ -81,8 +70,8 @@ also holds the following changes:
   `Makefile` wraps the header-file fallback of the `libnuma` and
   `libhugetlbfs` detection in parentheses (`8b42a20`).
 - For issue [#3](https://github.com/SpareCores/sc-membench/issues/3), the
-  `README.md` gained a Packaging section with a link to the packaging status
-  of sc-membench on repology.org (`c4b695f`).
+  release links the packaging status of sc-membench on repology.org
+  (`c4b695f`).
 
 ## 1.2.1: Universal Binary
 
@@ -111,8 +100,7 @@ Released 2026-01-13. This release made the following changes:
 ## 1.0.2: More Consistent Results
 
 Released 2026-01-11. Each measurement runs until either a target time or a
-maximum iteration count is reached. The `README.md` gained the comparison
-with LMbench and results from AWS.
+maximum iteration count is reached.
 
 ## 1.0.1: Huge Pages Support
 
@@ -131,9 +119,8 @@ Released 2026-01-05. The first version had the following features:
 
 ## Experiments That Informed the Design
 
-The measurements in this section come from the `README.md` of earlier
-versions. That `README.md` did not state which version and
-settings produced them.
+The measurements in this section were taken with earlier versions, and which
+version and settings produced them was not stated.
 
 ### Huge Pages and Latency
 
@@ -184,7 +171,7 @@ Key observations:
 - RAM region: 10-16% lower latency with huge pages.
 - THP works automatically: no pre-allocation needed.
 
-The previous `README.md` explained the difference as follows. With 4KB pages,
+At the time, the difference was explained as follows. With 4KB pages,
 a 128 MB buffer spans 32,768 pages, which cannot fit in a TLB of \~1000-2000
 entries, so random pointer chasing causes frequent TLB misses, each adding
 10-20+ CPU cycles for a page table walk. With 2MB huge pages, the same buffer
@@ -194,17 +181,18 @@ memory bus is already saturated.
 
 That explanation does not apply to a build with `libnuma`: its multi-thread
 bandwidth buffers bypass `-H`, so huge pages could not change their
-bandwidth; see [Documentation Rewrite](#documentation-rewrite).
+bandwidth; see
+[Behavior Checked Against the Code](#behavior-checked-against-the-code).
 
 ### Result Variability
 
 With thread pinning, NUMA-local memory, best-of tries, and latency sampling,
-the previous `README.md` stated a benchmark variability of typically <1%,
-compared to 30-60% without them.
+the benchmark variability was stated as typically <1%, compared to 30-60%
+without them.
 
 ### Example Output on Azure D96pls_v6
 
-The previous `README.md` showed the following output of
+An earlier version produced the following output on
 [Azure D96pls_v6](https://sparecores.com/server/azure/Standard_D96pls_v6)
 (96 ARM cores, 64KB L1, 1MB L2, 128MB L3):
 
@@ -223,7 +211,7 @@ size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,th
 262144,latency,0,122.22,0.90,7,1,7,21.756578
 ```
 
-It read the rows as follows:
+The rows read as follows:
 
 - 32KB: fits in L1, with very high bandwidth (\~9.3 TB/s read) and low
   latency (\~1.8ns, stddev 0.00)
@@ -234,8 +222,7 @@ It read the rows as follows:
 
 ### Example Human-Readable Output
 
-The previous `README.md` showed the following output of `./membench -R`, on
-an unnamed server with 32 CPUs:
+An example of the `-R` output added in 1.2.0, from a server with 32 CPUs:
 
 ```text
 Size       Op          Bandwidth      Latency  Threads
@@ -276,11 +263,13 @@ BENCHMARK SCORE (higher is better):
 
 The table goes to stdout and the summary to stderr. The "MB/s" label of the
 summary is MiB/s; see [Bandwidth Unit](./docs/limitations.md#bandwidth-unit).
+The Combined Score of this example does not match the formula, which gives
+about 12,720 for these two scores.
 
 ### Typical Values
 
-The previous `README.md` listed the following typical values for modern
-systems, without a source:
+The following typical values for modern systems were given at the time,
+without a source:
 
 | Level | Bandwidth | Latency |
 | --- | --- | --- |
@@ -289,5 +278,5 @@ systems, without a source:
 | L3 cache | 50-100 GB/s | 10-40 ns (larger/3D V-Cache may be higher) |
 | Main memory | 20-100 GB/s (DDR4/DDR5, depends on channels) | 25-50 ns (fast DDR5) to 60-120 ns (DDR4) |
 
-The previous `README.md` also placed the L1 boundary at "32-64KB per thread
-typically" and the L2 boundary at "256KB-1MB per thread typically".
+The L1 boundary was also placed at "32-64KB per thread typically" and the L2
+boundary at "256KB-1MB per thread typically".
