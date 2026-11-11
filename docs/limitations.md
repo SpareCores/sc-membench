@@ -97,7 +97,13 @@ The latency test has the following constraints:
 
 With `libnuma` available, as in the image, multi-thread bandwidth buffers
 come from `numa_alloc_onnode` and never use huge pages. The `-H` option then
-changes only the latency rows and bandwidth rows measured on one thread.
+changes only the latency rows and the bandwidth rows whose `threads` value is
+1. A bandwidth run uses one thread in the following cases:
+
+- on a server with 1 vCPU
+- with `-p 1`
+- in the first step of `-a`
+- when the memory guard halves the thread count down to 1
 
 The huge page size comes from `/proc/meminfo`; the image is built without
 `libhugetlbfs`.

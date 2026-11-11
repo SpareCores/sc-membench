@@ -169,6 +169,10 @@ The `-vv` option logs the huge page path of each allocation. For THP, it
 shows only that the `madvise` call succeeded, not that the kernel used huge
 pages.
 
+Production passes `-H`, but whether its hosts provide explicit huge pages or
+THP is not published, so the page type behind the published latency results
+is unknown, and a run of the image may get a different one.
+
 With `libnuma`, as in the image, in `make numa` and `make full` builds, and
 in a plain `make` build that detects it, multi-thread bandwidth buffers never
 use huge pages; see [Huge Pages Scope](./limitations.md#huge-pages-scope).

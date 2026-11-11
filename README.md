@@ -81,8 +81,8 @@ portable, compiler-generated code. The main limitations are the following:
   stops at 21 samples even when they still vary more than the 5% target, and
   latency is measured once per size, on CPU 0 only.
 - **[Huge Pages Scope](./docs/limitations.md#huge-pages-scope):** In the
-  image, `-H` applies only to the latency chain and single-thread bandwidth
-  runs.
+  image, `-H` applies only to the latency chain and to bandwidth rows whose
+  `threads` value is 1.
 - **[Time Limit and Exit Code](./docs/limitations.md#time-limit-and-exit-code):**
   The `-t` limit is checked only after each measurement, and the exit code is
   0 even when a size could not be allocated.
@@ -186,9 +186,10 @@ levels show, and
 [How the Navigator Uses the Results](./docs/usage.md#how-the-navigator-uses-the-results)
 for what is published.
 
-For example, a production run on an AWS (Amazon Web Services) `c8g.medium`
-server with 1 vCPU, 64 KiB of L1d, 2 MiB of L2, and 36 MiB of L3 cache
-measured 10 sizes from 32 KiB to 128 MiB in 56 seconds
+For example, a production run on an AWS (Amazon Web Services)
+[`c8g.medium`](https://sparecores.com/server/aws/c8g.medium) server with
+1 vCPU, 64 KiB of L1d, 2 MiB of L2, and 36 MiB of L3 cache measured 10 sizes
+from 32 KiB to 128 MiB in 56 seconds
 ([recorded output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.medium/0/membench/stdout)).
 Its first size, the L3 size (36 MiB, rounded to 32 MiB), and the largest size
 (4 × L3, rounded to 128 MiB) read as follows:
@@ -210,6 +211,9 @@ size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,th
 131072,copy,24466.47,0,0,0,1,47,0.245888
 131072,latency,0,110.84,0.41,7,1,7,10.066027
 ```
+
+<!-- embed -->
+[Memory Bandwidth of c8g.medium](https://sparecores.com/embed/server/aws/c8g.medium/bw_mem)
 
 Read bandwidth falls from \~73 GiB/s in L1d to \~26 GiB/s at 128 MiB, and
 latency rises from 2.16 ns to 110.84 ns. The 32 MiB latency row stopped at

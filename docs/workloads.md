@@ -188,8 +188,8 @@ THP needs no pre-allocated pool, but the host's THP mode must be `madvise`
 or `always`, and the tool does not check it. To use explicit huge pages, see
 [Explicit Huge Pages](./usage.md#explicit-huge-pages).
 
-In the image, `-H` covers the latency chain and bandwidth runs with one
-thread. Bandwidth runs with more threads allocate their buffers through
+In the image, `-H` covers the latency chain and bandwidth runs whose
+`threads` value is 1. Bandwidth runs with more threads allocate their buffers through
 `libnuma`, which bypasses the huge page path; see
 [Huge Pages Scope](./limitations.md#huge-pages-scope).
 
