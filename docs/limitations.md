@@ -10,9 +10,9 @@ baseline instruction set of each architecture (`-march=x86-64` or
 therefore runs on every CPU of the architecture.
 
 The loops contain no hand-written SIMD (Single Instruction, Multiple Data)
-code and no non-temporal stores. The results are the bandwidth of this
-portable code, the same on every server type, not of kernels tuned for one
-CPU.
+code and no non-temporal stores. Every server type runs the same portable
+code, so the results show the bandwidth of that code, not of loops tuned for
+one CPU.
 
 ### Container Limits
 

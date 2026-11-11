@@ -302,8 +302,8 @@ The columns are the following:
   and `latency_samples` their count (7 to 21); all three are `0` for
   bandwidth rows.
 - `threads` is the thread count used, always `1` for latency.
-- `iterations` is the per-thread iteration count of the kept try for
-  bandwidth rows, and the sample count for latency rows.
+- `iterations` is the number of passes over the buffer per thread in the kept
+  try for bandwidth rows, and the sample count for latency rows.
 - `elapsed_s` is the timed loop of the slowest thread for bandwidth rows, and
   the wall time including chain allocation for latency rows.
 

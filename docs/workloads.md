@@ -23,6 +23,11 @@ and L3 cache sizes ([`membench.c`](../membench.c), `get_sizes`):
 | 2 × L3 | RAM |
 | 4 × L3 | RAM |
 
+The labels describe the latency rows and the bandwidth rows with one thread.
+A bandwidth row with more threads uses the size times the thread count in
+total, so with many threads it reaches RAM at a smaller per-thread size than
+the table shows.
+
 Each size is rounded to the nearest power of 2. A size is kept only if it is
 larger than the previous one and at most the sweep limit, which is half of
 the RAM divided by the thread count.
@@ -99,9 +104,9 @@ two threads share a buffer, they do not contend for the same cache lines. On
 a single-node host, the NUMA allocation makes no difference.
 
 **Calibration:** One warmup read and one timed single-thread pass on the
-buffer of thread 0 set the iteration count so that the pass would take about
-0.25 seconds, between 3 and 10,000,000 iterations. All threads then run that
-count.
+buffer of thread 0 set the iteration count, the number of passes over the
+buffer, so that the passes would take about 0.25 seconds on one thread,
+between 3 and 10,000,000 iterations. All threads then run that count.
 
 **Tries:** Each measurement runs once as a discarded warmup, which lets the
 CPU frequency ramp up, then `-r` times (default: 3), and the highest
@@ -118,7 +123,7 @@ the architecture; see [Plain C Loops](./limitations.md#plain-c-loops).
 ## Read
 
 Every thread reads all 64-bit words of its buffer and XORs them into eight
-independent accumulators, 256 bytes per loop iteration
+independent accumulators, 256 bytes per unrolled loop step
 ([`membench.c`](../membench.c), `mem_read`).
 
 ## Write

@@ -19,9 +19,9 @@ The tool is one C file, [`membench.c`](../membench.c), built with the
 | `libnuma` | Allocates each buffer on the NUMA node of its thread | Linux only | Optional, at build and runtime |
 | `libhugetlbfs` | Detects the huge page size | Linux only | Optional, at build and runtime |
 
-`hwloc` 2.x is required: `hwloc` 1.x has a different API and is not
-supported. Without `hwloc`, the tool reads the caches from `sysctl` on macOS
-and BSD, and from `/sys/devices/system/cpu/*/cache/` on Linux. Without
+A build with `hwloc` needs version 2.x; version 1.x has a different API and is
+not supported. Without `hwloc`, the tool reads the caches from `sysctl` on
+macOS and BSD, and from `/sys/devices/system/cpu/*/cache/` on Linux. Without
 `libnuma`, memory is allocated without NUMA awareness, which may underperform
 on multi-socket servers. Without `libhugetlbfs`, the huge page size is read
 from `/proc/meminfo`.

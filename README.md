@@ -227,7 +227,7 @@ All tests are in one C file, [`membench.c`](./membench.c). Each size runs
 the following operations in this fixed order; `-o` only filters them:
 
 - **[Read](./docs/workloads.md#read):** Every thread XORs all 64-bit words of
-  its buffer into eight accumulators, 256 bytes per loop iteration.
+  its buffer into eight accumulators, 256 bytes per unrolled loop step.
 - **[Write](./docs/workloads.md#write):** Every thread stores a 64-bit
   pattern to all words of its buffer.
 - **[Copy](./docs/workloads.md#copy):** Every thread copies its source buffer
