@@ -24,8 +24,9 @@ guard.
 ### Bandwidth Unit
 
 The code divides bytes by 1,048,576, so `bandwidth_mb_s` is in MiB/s. The
-column name, the usage text, and the Navigator label it MB/s. The `-R` table
-divides the MiB/s value by 1,000 for each larger label, so a value shown as
+column name, the usage text, and the label in
+[Spare Cores Navigator](https://docs.sparecores.com/overview) call it MB/s. The
+`-R` table divides the MiB/s value by 1,000 for each larger label, so a value shown as
 "GB/s" is in units of 1,000 MiB/s.
 
 The `size_kb` column is in KiB (bytes divided by 1,024).
@@ -42,8 +43,9 @@ good as that detection:
   is four times one of them, not four times their total. With `-v`, stderr labels the size
   "(per core)", which it is not.
 - When `hwloc` finds no caches, the sizes follow the defaults of 32 KiB,
-  256 KiB, and 8 MiB instead of the real caches. In production, this happens
-  on 17 server types with Ampere Altra-class Arm CPUs. The log does not mark
+  256 KiB, and 8 MiB instead of the real caches. In
+  [production](./usage.md#production-setup), this happens on 17 server types
+  with Ampere Altra-class Arm CPUs. The log does not mark
   the fallback: it prints the defaults as detected sizes.
 
 See [Cache Detection](./workloads.md#cache-detection) for examples.
@@ -131,11 +133,11 @@ limit, which the log reports as `Time limit reached`.
 ### Older Production Results
 
 Production results from versions 1.0.1 to 1.2.1 are published next to those
-of 1.2.2, with the version recorded in each run's `meta.json`. Version 1.0.3
-changed the latency method, and 1.1.0 moved the bandwidth operations to
-OpenMP. Five of the oldest runs have a CSV with seven columns, without
+of 1.2.2, with the version recorded in the `version` field of each run's
+`meta.json`. Version 1.0.3 changed the latency method, and 1.1.0 moved the
+bandwidth operations to OpenMP. Five of the oldest runs have a CSV with seven columns, without
 `latency_stddev_ns` and `latency_samples`.
 
 We plan to rerun the server types that have older results, with no date set
-yet. Until then, note the version of each result when you compare two server
+yet. Until then, check the version of each result before comparing two server
 types.

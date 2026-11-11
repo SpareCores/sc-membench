@@ -110,7 +110,8 @@ The binary takes the same options as the image. Run it as follows:
 ```
 
 Outside the container, the run has no `nice -n -20` priority and no
-`resource-tracker`.
+`resource-tracker`. To match the priority, run the binary as root under
+`nice -n -20`.
 
 ## Usage Examples
 
@@ -120,7 +121,7 @@ See [Options](#options) for every option and its default.
 
 ```bash
 # Use huge pages for large buffers (with libnuma, only the latency chain and
-# one-thread bandwidth runs); recommended for benchmarking
+# one-thread bandwidth rows); recommended for benchmarking
 ./membench -H
 
 # The same, with a log that shows the detected system and the runtime
@@ -147,7 +148,7 @@ See [Options](#options) for every option and its default.
 # Run only the read and latency operations
 ./membench -o read -o latency
 
-# Restrict the OpenMP places that threads can be bound to, to cores
+# Bind each thread to a whole core instead of a hardware thread (OpenMP places)
 OMP_PLACES=cores ./membench
 ```
 
@@ -169,9 +170,10 @@ The `-vv` option logs the huge page path of each allocation. For THP, it
 shows only that the `madvise` call succeeded, not that the kernel used huge
 pages.
 
-Production passes `-H`, but whether its hosts provide explicit huge pages or
-THP is not published, so the page type behind the published latency results
-is unknown, and a run of the image may get a different one.
+[Production](#production-setup) passes `-H`, but whether its hosts provide
+explicit huge pages or THP is not published, so the page type behind the
+published latency results is unknown, and a run of the image may get a
+different one.
 
 With `libnuma`, as in the image, in `make numa` and `make full` builds, and
 in a plain `make` build that detects it, multi-thread bandwidth buffers never
@@ -186,7 +188,7 @@ To pre-allocate explicit huge pages of 2 MiB for the latency test, as root:
 # Check current huge page status
 grep Huge /proc/meminfo
 
-# LATENCY tests run single-threaded, on a chain of at most 2 GiB:
+# LATENCY tests run on one thread, on a chain of at most 2 GiB:
 #   256 MiB buffer: 256 / 2 = 128 pages (256 MB)
 #   2 GiB chain (the cap): 2,048 / 2 = 1,024 pages (2 GB)
 
@@ -233,25 +235,29 @@ The longest run of any version took 1,428.6 seconds, on
 [`aws/i7ie.48xlarge`](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/i7ie.48xlarge/0/membench/stderr)
 with version 1.0.2. No production run reached the limit of 1,800 seconds.
 
-A single-thread pass on the buffer of thread 0 sets the iteration count so
+A one-thread pass on the buffer of thread 0 sets the iteration count so
 that this pass takes about 0.25 seconds, and then all threads run that count.
 When the threads together are limited by memory bandwidth, one multi-thread
-measurement can therefore take several seconds: `elapsed_s` reaches about 4.3 seconds in
-production
+measurement can therefore take several seconds: `elapsed_s` reaches about
+4.3 seconds in production
 ([`aws/c8g.48xlarge` output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.48xlarge/0/membench/stdout)).
-Each bandwidth measurement also runs four times: one discarded warmup run and
+Each bandwidth measurement also runs four times: one discarded warmup try and
 three tries.
 
-Use the `Total runtime` line for the duration of the benchmark itself. The
-`start` and `end` times in a run's `meta.json` include more than the
+A latency measurement takes 7 to 21 samples of about 0.1 seconds each, and its
+`elapsed_s` also includes allocating and shuffling the chain. In the
+[example](../README.md#results), the 128 MiB latency row took 10.1 seconds.
+
+Use the `Total runtime` line for the duration of this benchmark itself. The
+`start` and `end` times in a run's `meta.json` include more than this
 benchmark: one run took 2,219 seconds by its
 [`meta.json`](https://github.com/SpareCores/sc-inspector-data/blob/main/data/alicloud/ecs.e-c1m2.2xlarge/0/membench/meta.json)
 but 79.0 seconds by its stderr.
 
 ## Production Setup
 
-The [Inspector](https://docs.sparecores.com/overview#how-it-works) of Spare
-Cores Navigator runs this image as the `membench` task
+The [Inspector](https://docs.sparecores.com/overview#how-it-works) of
+[Spare Cores Navigator](https://docs.sparecores.com/overview) runs this image as the `membench` task
 ([`tasks.py`](https://github.com/SpareCores/sc-inspector/blob/main/inspector/tasks.py)).
 A plain `docker run` differs from the production setup as follows:
 
@@ -259,10 +265,10 @@ A plain `docker run` differs from the production setup as follows:
 | --- | --- | --- |
 | Arguments | `-Hv -t 1800`: huge pages, a log on stderr, and a soft limit of 1,800s | None: regular pages, no log, and no time limit |
 | Privileges | Privileged container | Not privileged unless `--privileged` is passed, which the image requires |
-| Network | Host networking | Docker's default network |
+| Network | Host networking, which comes from the shared `DOCKER_OPTS` of the Inspector, not from the image | Docker's default network |
 | Timeout | The task is stopped after 40 min | None |
 | Version | Recorded in `meta.json` from a separate `-V` call | Not recorded |
-| Resource tracking | `resource-tracker` gets a project name, a job name, a run ID, and a token for Spare Cores Sentinel | `resource-tracker` runs with `TRACKER_QUIET=true` and none of these settings |
+| Resource tracking | `resource-tracker` gets a project name, a job name, a run ID, and an access token for [Spare Cores Sentinel](https://sentinel.sparecores.com/) | `resource-tracker` runs with `TRACKER_QUIET=true` and none of these settings |
 
 The equivalent command is the following:
 
@@ -368,13 +374,16 @@ MiB/s value of the CSV by 1,000 for each larger label, so a value shown as
 - **Peak:** the highest bandwidth of each bandwidth operation over all sizes.
 - **Weighted Avg:** the average bandwidth of each operation, weighted by the
   base-2 logarithm of the size, so larger buffers count more.
-- **Best latency:** the latency at the largest size tested, the closest to
-  RAM latency.
+- **Best latency:** the tool's label for the latency at the largest size
+  tested, the closest to RAM latency. The size picks it, not the lowest value.
 - **Bandwidth Score:** the mean of the three peaks, divided by 1,000.
 - **Latency Score:** 1,000 divided by the best latency in nanoseconds.
 - **Combined Score:** the square root of the product of the two scores,
   multiplied by 100. As a geometric mean, it lets neither bandwidth nor
   latency dominate.
+
+A higher score is better: a higher bandwidth raises the Bandwidth Score, and a
+lower best latency raises the Latency Score.
 
 When `-t`, `-p`, or `-s` is set, the summary warns that the scores may not be
 comparable, for example:
@@ -404,14 +413,14 @@ Options:
               and pinning lines)
   -s SIZE_KB  Test only this per-thread buffer size in KiB, e.g. -s 1024
               (disables the sweep; -t is ignored)
-  -r TRIES    Tries per bandwidth test, best kept (default: 3, at least 1;
-              not used for latency)
+  -r TRIES    Tries per bandwidth measurement, best kept (default: 3, at
+              least 1; not used for latency)
   -f          Full sweep: add 512 MiB, 1 GiB, ... up to the sweep limit
               (half of the RAM / threads; at most 18 sizes)
   -p THREADS  Use exactly this many threads for bandwidth (default: online CPUs)
   -a          Auto-scaling: try 1, 2, 4, ... up to the CPU count per size
               and bandwidth operation, keep the best
-  -t SECONDS  Soft runtime limit, checked after each test; 0 = unlimited
+  -t SECONDS  Soft runtime limit, checked after each measurement; 0 = unlimited
               (default: 0)
   -o OP       Run only this operation: read, write, copy, or latency
               Can be given several times (default: all four)

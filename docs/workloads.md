@@ -23,7 +23,7 @@ and L3 cache sizes ([`membench.c`](../membench.c), `get_sizes`):
 | 2 × L3 | RAM |
 | 4 × L3 | RAM |
 
-The labels describe the latency rows and the bandwidth rows with one thread.
+The labels describe the latency rows and the one-thread bandwidth rows.
 A bandwidth row with more threads uses the size times the thread count in
 total, so with many threads it reaches RAM at a smaller per-thread size than
 the table shows.
@@ -32,8 +32,9 @@ Each size is rounded to the nearest power of 2. A size is kept only if it is
 larger than the previous one and at most the sweep limit, which is half of
 the RAM divided by the thread count.
 
-Of the 2,503 production runs of all versions with a recorded output, 2,290
-tested all 10 sizes, 73 tested 9, and 140 tested 8.
+Of the 2,503
+[production runs](./usage.md#production-setup) of all versions with a recorded
+output, 2,290 tested all 10 sizes, 73 tested 9, and 140 tested 8.
 
 The following options change the sizes:
 
@@ -63,6 +64,10 @@ If `hwloc` reports no caches, the sizes fall back to the following defaults:
 server types print exactly these defaults. All of them have Ampere Altra-class
 Arm CPUs; one is Hetzner Cloud `cax11`
 ([recorded log](https://github.com/SpareCores/sc-inspector-data/blob/main/data/hcloud/cax11/0/membench/stderr)).
+
+The defaults apply per level ([`membench.c`](../membench.c), `use_defaults`): when
+only the L3 size is missing, the L3 size becomes 8 MiB and the other sizes stay
+as detected.
 
 A binary built without `hwloc` reads the caches of `cpu0` from
 `/sys/devices/system/cpu/` on Linux and from `sysctl` on macOS and BSD. The
@@ -103,7 +108,7 @@ cross-node accesses and page migrations during the measurement. Because no
 two threads share a buffer, they do not contend for the same cache lines. On
 a single-node host, the NUMA allocation makes no difference.
 
-**Calibration:** One warmup read and one timed single-thread pass on the
+**Calibration:** One warmup read and one timed one-thread pass on the
 buffer of thread 0 set the iteration count, the number of passes over the
 buffer, so that the passes would take about 0.25 seconds on one thread. The
 count is kept between 3 and 10,000,000 iterations. All threads then run that
@@ -111,7 +116,7 @@ count.
 
 **Tries:** Each measurement runs once as a discarded warmup, then `-r` times
 (default: 3), and the highest bandwidth is kept. The warmup lets the CPU
-frequency ramp up. Every run allocates its buffers again.
+frequency ramp up. Every try allocates its buffers again.
 
 **Bandwidth:** The reported value is the per-thread size times the thread
 count times the iteration count, divided by the elapsed time of the slowest
@@ -166,15 +171,16 @@ or prefetch the accesses. The method is pointer chasing, based on
 At small sizes, this measures the hit latency of the L1d, L2, and L3 caches,
 and at large sizes the RAM latency. Latency runs on one thread and is
 measured once per size: apart from the warmup traversal in step 4, it has no
-discarded warmup run, unlike the bandwidth operations, and `-r` does not
+discarded warmup try, unlike the bandwidth operations, and `-r` does not
 apply. The order of the nodes differs between runs, because the shuffle is
 seeded from the time.
 
 The chain is capped at 2 GiB or a quarter of the RAM, whichever is smaller,
 and the row still prints the size of the sweep; see
-[Latency Sampling](./limitations.md#latency-sampling). The 2 GiB cap is set
-to exceed the largest L3 caches, which pass 1 GiB on some CPUs, so that the
-chain can still reach RAM. The thread stays pinned to CPU 0 after the test;
+[Latency Sampling](./limitations.md#latency-sampling). The output does not
+mark a capped row: it is capped when `size_kb` exceeds 2 GiB or a quarter of
+the RAM. The 2 GiB cap is set to exceed the largest L3 caches, which pass 1 GiB
+on some CPUs, so that the chain can still reach RAM. The thread stays pinned to CPU 0 after the test;
 see [Thread Placement](./limitations.md#thread-placement).
 
 ## Huge Pages
@@ -195,9 +201,9 @@ THP needs no pre-allocated pool, but the host's THP mode must be `madvise`
 or `always`, and the tool does not check it. To use explicit huge pages, see
 [Explicit Huge Pages](./usage.md#explicit-huge-pages).
 
-In the image, `-H` covers the latency chain and bandwidth runs whose
-`threads` value is 1. Bandwidth runs with more threads allocate their buffers through
-`libnuma`, which bypasses the huge page path; see
+In the image, `-H` covers the latency chain and bandwidth rows whose
+`threads` value is 1. Bandwidth rows with more threads allocate their buffers
+through `libnuma`, which bypasses the huge page path; see
 [Huge Pages Scope](./limitations.md#huge-pages-scope).
 
 Huge pages matter most for latency: the random accesses of the pointer chase

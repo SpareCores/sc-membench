@@ -6,7 +6,7 @@ OpenMP, TLB) are defined in the
 which also lists the terms each image uses.
 
 - **`membench`**: A memory benchmark tool written in C by Spare Cores, also
-  called sc-membench. It measures read, write, and copy bandwidth with one
+  called `sc-membench`. It measures read, write, and copy bandwidth with one
   buffer per OpenMP thread, and memory latency with a pointer chase, over a
   series of buffer sizes derived from the CPU's cache sizes.
   [GitHub](https://github.com/SpareCores/sc-membench)

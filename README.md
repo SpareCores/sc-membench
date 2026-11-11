@@ -1,8 +1,8 @@
 # membench
 
 This benchmark measures the memory bandwidth and latency of cloud servers with
-`membench`, a C tool written by Spare Cores on OpenMP. It sweeps per-thread
-buffer sizes derived from the detected L1d, L2, and L3 cache sizes, from half
+`membench`, a C tool that the Spare Cores team wrote with OpenMP. It sweeps
+per-thread buffer sizes derived from the detected L1d, L2, and L3 cache sizes, from half
 the L1d cache to four times the L3 cache, so that the results trace each cache
 level and RAM.
 
@@ -22,17 +22,17 @@ empirical performance measurements for more than 5,000 cloud server types,
 among them the
 [memory bandwidth](https://github.com/SpareCores/sc-images/blob/main/images/benchmark/docs/bw-mem.md)
 measured with LMbench's `bw_mem`. We ran `bw_mem` across 3,000+ cloud server
-types, and the results were not always consistent with the detected L1, L2,
+types, and the results were not always consistent with the detected L1d, L2,
 and L3 cache sizes. Some inconsistencies came from cache detection, which
 relied on `lscpu` output that is sometimes wrong or incomplete; others traced
-back to `bw_mem` itself, so we wrote our own tool. The `bw_mem` friction
-points were the following:
+back to `bw_mem` itself, so we wrote our own tool. The problems with
+`bw_mem` were the following:
 
 - Its `rd` mode reads every fourth word, so only 25% of the buffer is
   accessed, and the reported bandwidth looks about 4x higher than the actual
-  throughput unless `frd` is used.
-- It forks separate processes per thread, and on servers with 96 or 192 vCPUs
-  we saw unexpected slowdowns that we could not reproduce or explain. This
+  throughput unless its `frd` mode is used.
+- It forks one process per parallel worker instead of starting threads, and
+  on servers with 96 or 192 vCPUs we saw unexpected slowdowns that we could not reproduce or explain. This
   benchmark uses OpenMP threads instead.
 - It has no huge page support (it uses `valloc`), so large-buffer latency
   tests pay TLB (Translation Lookaside Buffer) overhead on top of the actual
@@ -42,7 +42,7 @@ points were the following:
 
 The article
 [Modern Memory Bandwidth Benchmarks](https://sparecores.com/article/membench)
-tells the full story, and
+describes the `bw_mem` findings in full, and
 [Comparison with LMbench](./docs/workloads.md#comparison-with-lmbench) lists
 the differences in method. The Navigator publishes four metrics from the
 output of this benchmark: read, write, and copy bandwidth, and latency, each
@@ -62,7 +62,8 @@ following:
 - **[Cache Detection](./docs/limitations.md#cache-detection):** The L3 size
   is that of one shared L3 cache, not the server total. When `hwloc` finds no
   caches, the sweep uses default cache sizes of 32 KiB (L1d), 256 KiB (L2), and
-  8 MiB (L3), as on 17 Arm server types in production.
+  8 MiB (L3), as on 17 Arm server types in the Navigator's
+  [production runs](./docs/usage.md#production-setup).
 - **[Container Limits](./docs/limitations.md#container-limits):** The CPU
   count and RAM size come from the host, not from Docker's `--cpus` or
   `--memory` limits.
@@ -82,11 +83,11 @@ following:
   stops at 21 samples even when they still vary more than the 5% target, and
   latency is measured once per size, on CPU 0 only.
 - **[Huge Pages Scope](./docs/limitations.md#huge-pages-scope):** In the
-  image, `-H` applies only to the latency chain and to bandwidth rows whose
-  `threads` value is 1.
+  image, the `-H` huge page option applies only to the latency chain and to
+  bandwidth rows whose `threads` value is 1.
 - **[Time Limit and Exit Code](./docs/limitations.md#time-limit-and-exit-code):**
-  The `-t` limit is checked only after each measurement, and the exit code is
-  0 even when a size could not be allocated.
+  The `-t` time limit is checked only after each measurement, and the exit
+  code is 0 even when a size could not be allocated.
 - **[Older Production Results](./docs/limitations.md#older-production-results):**
   Results from versions 1.0.1 to 1.2.1 are published next to 1.2.2 results,
   with the version noted.
@@ -157,8 +158,10 @@ more than 5 minutes 21 seconds. See
 
 ### Settings
 
-This benchmark takes command-line options, not environment variables. The
-common ones are listed here; see the [full option list](./docs/usage.md#options)
+This benchmark is configured with command-line options; the few environment
+variables that apply are listed under
+[Environment Variables](./docs/usage.md#environment-variables). The common
+options are listed here; see the [full option list](./docs/usage.md#options)
 for all of them and their defaults:
 
 - `-v` logs the detected CPUs, memory, caches, NUMA (Non-Uniform Memory
@@ -221,7 +224,8 @@ size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,th
 Read bandwidth falls from \~73 GiB/s in L1d to \~26 GiB/s at 128 MiB, and
 latency rises from 2.16 ns to 110.84 ns. The 32 MiB latency row stopped at
 the 21-sample limit with a CV (Coefficient of Variation) of about 10%, above
-the 5% target. The 16 MiB row, not shown, stopped there too, at about 16%. See
+the 5% target. The CV is `latency_stddev_ns` divided by `latency_ns`. The
+16 MiB row, not shown, stopped there too, at about 16%. See
 [Latency Sampling](./docs/limitations.md#latency-sampling).
 
 ## Workloads

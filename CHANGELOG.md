@@ -70,7 +70,7 @@ also holds the following changes:
   `Makefile` wraps the header-file fallback of the `libnuma` and
   `libhugetlbfs` detection in parentheses (`8b42a20`).
 - For issue [#3](https://github.com/SpareCores/sc-membench/issues/3), the
-  release links the packaging status of sc-membench on repology.org
+  release links the packaging status of `sc-membench` on repology.org
   (`c4b695f`).
 
 ## 1.2.1: Universal Binary
@@ -128,7 +128,7 @@ With `-H`, latency measurements were often 20-40% lower while bandwidth
 stayed roughly the same.
 
 Measured on [Azure D96pls_v6](https://sparecores.com/server/azure/Standard_D96pls_v6)
-(96 ARM Neoverse-N2 cores, 2 NUMA nodes, L1d=64KB/core, L2=1MB/core,
+(96 Arm Neoverse-N2 cores, 2 NUMA nodes, L1d=64KB/core, L2=1MB/core,
 L3=128MB shared):
 
 | Buffer | No Huge Pages | With THP (-H) | Improvement |
@@ -194,7 +194,7 @@ without them.
 
 An earlier version produced the following output on
 [Azure D96pls_v6](https://sparecores.com/server/azure/Standard_D96pls_v6)
-(96 ARM cores, 64KB L1, 1MB L2, 128MB L3):
+(96 Arm cores, 64KB L1, 1MB L2, 128MB L3):
 
 ```csv
 size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,threads,iterations,elapsed_s

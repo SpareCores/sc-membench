@@ -13,7 +13,7 @@ The tool is one C file, [`membench.c`](../membench.c), built with the
 
 | Library | Purpose | Platforms | Need |
 | --- | --- | --- | --- |
-| C11 compiler with OpenMP (gcc or clang) | Builds the tool | All | Required to build |
+| C11 compiler with OpenMP (GCC or Clang) | Builds the tool | All | Required to build |
 | `libgomp` | OpenMP runtime for the parallel execution (`libgomp1` on Debian and Ubuntu, `libgomp` on RHEL) | All | Required at runtime |
 | `hwloc` 2 | Detects the L1d, L2, and L3 cache sizes | Linux, macOS, BSD | Recommended, at build and runtime |
 | `libnuma` | Allocates each buffer on the NUMA node of its thread | Linux only | Optional, at build and runtime |
@@ -89,12 +89,12 @@ make clean        # remove the built binaries
 
 Set `CC` to use another compiler. The flags are
 `-O3 -Wall -Wextra -std=c11 -fopenmp`, with `-march=x86-64 -mtune=generic` on
-Linux x86_64 and `-mcpu=generic+crc` on aarch64, so that one binary runs on
-every CPU of the architecture.
+Linux x86_64 and `-mcpu=generic+crc` on aarch64 (arm64), so that one binary
+runs on every CPU of the architecture.
 
 ## Recommended Build
 
-For production use on servers, build with all features:
+For use on servers, build with all features:
 
 ```bash
 # Get the source
