@@ -235,12 +235,12 @@ explicit huge pages or THP is not published, so the page type behind the
 published latency results is unknown, and a run of the image may get a
 different one.
 
-With `libnuma`, as in the image, in `make numa` and `make full` builds, and in a
-plain `make` build that detects it, multi-thread bandwidth buffers never use
+With `libnuma` (in the image, in `make numa` and `make full` builds, and in a
+plain `make` build that detects it), multi-thread bandwidth buffers never use
 huge pages; see [Huge Pages Scope](./limitations.md#huge-pages-scope). The pool
 then only has to hold the latency chain, which is capped at 2 GiB or a quarter
 of the RAM, whichever is smaller. When the thread count is 1, the bandwidth
-buffers also come from the pool: the size, and twice that for copy.
+buffers also come from the pool: one buffer size, and twice that for copy.
 
 To pre-allocate explicit huge pages of 2 MiB for the latency test, first
 check the current huge page status:
@@ -250,7 +250,7 @@ grep Huge /proc/meminfo
 ```
 
 The latency test runs on one thread, on a chain of at most 2 GiB. A 256 MiB
-buffer needs 256 / 2 = 128 pages (256 MiB), and the 2 GiB chain of the cap
+buffer needs 256 / 2 = 128 pages (256 MiB), and a chain at the 2 GiB cap
 needs 2,048 / 2 = 1,024 pages (2 GiB).
 
 To allocate the 1,024 pages of the 2 GiB cap as root (replace the count with
@@ -306,13 +306,12 @@ log](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/i7ie.48x
 No production run reached the limit of 1,800 seconds.
 
 Before each measurement, one thread times a single pass over its buffer and
-sets the iteration count, the number of passes, so that one thread would need
+sets the iteration count (the number of passes) so that one thread would need
 about 0.25 seconds for them (see [Calibration](./workloads.md#calibration)).
-All threads then run that count.
-When the threads together are limited by memory bandwidth, one multi-thread
-measurement can therefore take several seconds: `elapsed_s` reaches about
-4.3 seconds in production,
-on [`aws/c8g.48xlarge`](https://sparecores.com/server/aws/c8g.48xlarge)
+All threads then run that count. When the threads together are limited by
+memory bandwidth, one multi-thread measurement can therefore take several
+seconds: `elapsed_s` reaches about 4.3 seconds in production, on
+[`aws/c8g.48xlarge`](https://sparecores.com/server/aws/c8g.48xlarge)
 ([recorded output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.48xlarge/0/membench/stdout)).
 
 Each bandwidth measurement also runs four times: one discarded warmup try and
@@ -428,8 +427,8 @@ A RAM value is published only when a row exceeds that total and the
 Navigator has a cache size for the server type.
 
 The `-R` summary and scores are not published; production does not pass
-`-R`. Results of versions before [1.2.2](../CHANGELOG.md#122-man-page) are still published, with the version
-noted; see
+`-R`. Results from versions before [1.2.2](../CHANGELOG.md#122-man-page) are
+still published, with the version noted; see
 [Older Production Results](./limitations.md#older-production-results).
 
 ## Human-Readable Output
@@ -452,8 +451,8 @@ which the last three are the membench scores:
   operation, with w = log₂(`size_kb` + 1), so larger buffers count more,
   in MiB/s.
 - **Best latency:** the tool's label for the latency at the largest size
-  tested, the closest to RAM latency, in ns. The size picks it, not the
-  lowest value.
+  tested, the closest to RAM latency, in ns. It is selected by size, not as
+  the lowest value.
 - **Bandwidth Score** = mean of the peaks / 1,000, in units of 1,000 MiB/s
   (labeled "GB/s").
 - **Latency Score** = 1,000 / best latency in ns, that is, dependent loads
@@ -522,8 +521,8 @@ The text that `-h` prints is out of date on the following five points:
   count or the placement.
 
 The man page, `membench.1`, repeats the statements about the default sweep, the
-`-H` threshold, and the `OMP_*` variables. For which buffers `-H` covers, see
-[Huge Pages](./workloads.md#huge-pages).
+`-H` threshold, and the `OMP_*` variables. For the buffers that `-H` covers,
+see [Huge Pages](./workloads.md#huge-pages).
 
 An invalid value of `-p`, `-s`, `-t`, or `-o` exits with code 1, as does an
 unknown option. A `-r` value below 1 is set to 1 instead

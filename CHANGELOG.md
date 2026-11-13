@@ -21,12 +21,12 @@ including its `-h` usage text, said otherwise:
   one-thread runs.
 - The image is built without `libhugetlbfs` and reads the huge page size from
   `/proc/meminfo`.
-- The default sweep stops at 4 × L3, not at 512 MB per thread, as the usage
-  text says.
-- The `-H` threshold is twice the detected huge page size, not ">= 4MB", as
-  the usage text says.
+- The default sweep stops at 4 × L3, not at the 512 MB per thread that the
+  usage text states.
+- The `-H` threshold is twice the detected huge page size, not the ">= 4MB"
+  that the usage text states.
 - `-t` is checked only after each measurement and is ignored with `-s`.
-- Latency sampling stops at 21 samples whatever the CV.
+- Latency sampling stops at 21 samples regardless of the CV.
 - Plain `make` detects and links `hwloc`, `libnuma`, and `libhugetlbfs`;
   `make basic` is the minimal build.
 - `--privileged` is needed for the `nice -n -20` entrypoint.
@@ -64,13 +64,13 @@ built since 2026-01-05. A push to `main` publishes
 
 Released 2026-02-27. Added the `membench.1` man page, which `make install`
 installs. `membench.c` differs from 1.2.1 only in its version. The release
-also holds the following changes:
+also includes the following changes:
 
 - For issue [#2](https://github.com/SpareCores/sc-membench/issues/2), the
   `Makefile` wraps the header-file fallback of the `libnuma` and
   `libhugetlbfs` detection in parentheses (`8b42a20`).
 - For issue [#3](https://github.com/SpareCores/sc-membench/issues/3), the
-  release links the packaging status of `sc-membench` on repology.org
+  release links to the packaging status of `sc-membench` on repology.org
   (`c4b695f`).
 
 ## 1.2.1: Universal Binary
@@ -81,16 +81,16 @@ on aarch64), so one binary runs on every CPU of the architecture.
 
 ## 1.2.0: Human-Readable Output and Scores
 
-Released 2026-01-26. Added `-R`, which prints a table, a summary, and the
-Bandwidth, Latency, and Combined scores instead of a CSV, after user feedback.
+Released 2026-01-26. Added `-R` after user feedback; it prints a table, a
+summary, and the Bandwidth, Latency, and Combined scores instead of a CSV.
 
 ## 1.1.0: OpenMP
 
-Released 2026-01-13. The bandwidth tests were rewritten to OpenMP.
+Released 2026-01-13. The bandwidth tests were rewritten with OpenMP.
 
 ## 1.0.3: Multi-Platform and New Latency Benchmark
 
-Released 2026-01-13. This release made the following changes:
+Released 2026-01-13. This release added the following:
 
 - a new latency test adapted from `ram_bench`: a pointer chase over nodes in
   random order
@@ -104,8 +104,8 @@ maximum iteration count is reached.
 
 ## 1.0.1: Huge Pages Support
 
-Released 2026-01-10. Added `-H` for huge pages and the selection of
-operations.
+Released 2026-01-10. Added the selection of operations and `-H` for huge
+pages.
 
 ## 1.0.0: Initial Release
 
@@ -119,8 +119,8 @@ Released 2026-01-05. The first version had the following features:
 
 ## Experiments That Informed the Design
 
-The measurements in this section were taken with earlier versions, and which
-version and settings produced them was not stated.
+The measurements in this section were taken with earlier versions, but the
+version and settings that produced them were not stated.
 
 ### Huge Pages and Latency
 

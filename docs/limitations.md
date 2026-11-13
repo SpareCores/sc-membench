@@ -86,9 +86,9 @@ comparing bandwidths at large sizes.
 
 The latency test has the following constraints:
 
-- Sampling stops at 21 samples whatever the CV (Coefficient of Variation), so a
-  row with 21 samples can have a CV above the 5% target. For example, the 16,384
-  KiB row of an AWS (Amazon Web Services)
+- Sampling stops at 21 samples regardless of the CV (Coefficient of
+  Variation), so a row with 21 samples can have a CV above the 5% target. For
+  example, the 16,384 KiB row of an AWS (Amazon Web Services)
   [`c8g.medium`](https://sparecores.com/server/aws/c8g.medium) run reports 24.76
   ns with a standard deviation of 4.03 ns, a CV of about 16% ([recorded
   output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.medium/0/membench/stdout)).
@@ -127,9 +127,9 @@ To find a dropped measurement, run with `-v` and compare the output with the
 log. The `Testing N buffer sizes` line gives the number of sizes, and the
 `Cache` line gives the cache sizes from which the table in
 [Buffer Sizes](./workloads.md#buffer-sizes) derives them. A size with fewer
-rows than the operations selected (four by default), or fewer sizes than
-that line announces, marks a dropped measurement or a stop at the `-t`
-limit, which the log reports as `Time limit reached`.
+rows than the operations selected (four by default), or fewer sizes than the
+`Testing N buffer sizes` line announces, marks a dropped measurement or a
+stop at the `-t` limit, which the log reports as `Time limit reached`.
 
 ### Older Production Results
 

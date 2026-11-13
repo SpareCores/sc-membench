@@ -43,7 +43,8 @@ To build on Debian and Ubuntu:
 apt-get install build-essential libhwloc-dev libnuma-dev libhugetlbfs-dev
 ```
 
-To run only on Debian and Ubuntu, as in the Docker image:
+To install only the runtime libraries on Debian and Ubuntu, as in the Docker
+image:
 
 ```bash
 apt-get install libgomp1 libhwloc15 libnuma1 libhugetlbfs-dev
@@ -55,7 +56,7 @@ To build on RHEL (Red Hat Enterprise Linux), CentOS, and Fedora:
 yum install gcc make hwloc-devel numactl-devel libhugetlbfs-devel
 ```
 
-To run only on RHEL, CentOS, and Fedora:
+To install only the runtime libraries on RHEL, CentOS, and Fedora:
 
 ```bash
 yum install libgomp hwloc-libs numactl-libs libhugetlbfs

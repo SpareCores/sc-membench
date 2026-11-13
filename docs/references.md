@@ -31,8 +31,8 @@ which also lists the terms each image uses.
   [GitHub](https://github.com/libhugetlbfs/libhugetlbfs)
 - **`libnuma`**: The Linux library behind the `numactl` command, with which a
   program sets its own NUMA policy. Its functions report the NUMA node of
-  each CPU and allocate memory on a chosen node, such as
-  `numa_alloc_onnode`.
+  each CPU and allocate memory on a chosen node, as `numa_alloc_onnode`
+  does.
   [man page](https://man7.org/linux/man-pages/man3/numa.3.html)
 - **`MADV_HUGEPAGE`**: A flag of the Linux `madvise` system call that asks the
   kernel to back a memory range with Transparent Huge Pages. It is a request,

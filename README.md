@@ -3,14 +3,15 @@
 This benchmark measures memory bandwidth and latency on cloud servers with
 `membench`, a C tool that the Spare Cores team wrote with OpenMP. It sweeps
 per-thread buffer sizes derived from the detected CPU cache sizes (L1d, L2, and
-L3), from half the L1d cache to four times the L3 cache so the results trace
+L3), from half the L1d cache to four times the L3 cache, so the results trace
 each cache level and RAM.
 
 At each size, it reports the aggregate read, write, and copy bandwidth of all
 CPUs and the latency of a single thread that chases pointers through the buffer
-in random order, as a CSV row per size and operation. It measures CPU memory
-local to each thread's NUMA (Non-Uniform Memory Access) node, not cross-NUMA
-access, per-thread or per-node bandwidth, or GPU memory, which
+in random order, as one CSV row per size and operation. It measures CPU memory
+local to each thread's NUMA (Non-Uniform Memory Access) node. It does not
+measure cross-NUMA access, per-thread or per-node bandwidth, or GPU memory,
+which
 [`nvbandwidth`](https://github.com/SpareCores/sc-images/tree/main/images/nvbandwidth)
 measures.
 
@@ -113,8 +114,8 @@ Ubuntu:
 sudo apt-get install build-essential libhugetlbfs-dev libhwloc-dev libnuma-dev
 ```
 
-To get the source and build it, which links `hwloc`, `libnuma`, and
-`libhugetlbfs` when they are installed:
+To get the source and build it (the build links `hwloc`, `libnuma`, and
+`libhugetlbfs` when they are installed):
 
 ```bash
 git clone https://github.com/SpareCores/sc-membench
@@ -287,7 +288,7 @@ container image was built from `images/membench/` in the
 2026-01-05 until 2026-02-27, when the [`Dockerfile`](./Dockerfile) moved to the
 [`sc-membench` repository](https://github.com/SpareCores/sc-membench).
 
-The releases that followed added the following:
+Later releases added the following:
 
 - [1.0.1](./CHANGELOG.md#101-huge-pages-support): huge page support.
 - [1.0.2](./CHANGELOG.md#102-more-consistent-results): measurements that run
@@ -295,13 +296,14 @@ The releases that followed added the following:
 - [1.0.3](./CHANGELOG.md#103-multi-platform-and-new-latency-benchmark): a new
   latency test adapted from `ram_bench`, plus macOS and BSD (Berkeley Software
   Distribution) support.
-- [1.1.0](./CHANGELOG.md#110-openmp): a rewrite of the bandwidth tests to OpenMP.
+- [1.1.0](./CHANGELOG.md#110-openmp): a rewrite of the bandwidth tests with
+  OpenMP.
 - [1.2.0](./CHANGELOG.md#120-human-readable-output-and-scores): the human-readable output and scores.
 - [1.2.1](./CHANGELOG.md#121-universal-binary): a single binary per
   architecture, built for its baseline instruction set.
 - [1.2.2](./CHANGELOG.md#122-man-page): a man page.
 
-Since [1.2.2](./CHANGELOG.md#122-man-page), only the Docker build and CI
+Since [1.2.2](./CHANGELOG.md#122-man-page), only the Docker build and CI have
 changed, so the `:main` image runs [1.2.2](./CHANGELOG.md#122-man-page) code.
 
 Earlier latency measurements with and without huge pages on an Azure and an

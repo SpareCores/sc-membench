@@ -120,7 +120,7 @@ a single-node host, the NUMA allocation makes no difference.
 ### Calibration
 
 One warmup read and one timed single-thread pass on the buffer of thread 0 set
-the iteration count, the number of passes over the buffer, so that the passes
+the iteration count (the number of passes over the buffer) so that the passes
 would take about 0.25 seconds on one thread. The count is kept between 3 and
 10,000,000 iterations. All threads then run that count.
 
@@ -191,7 +191,7 @@ between runs because the shuffle is seeded from the time.
 The chain is capped at 2 GiB or a quarter of the RAM, whichever is smaller, and
 the row still prints the size of the sweep; see
 [Latency Sampling](./limitations.md#latency-sampling). The output does not mark
-a capped row: it is capped when `size_kb` exceeds 2 GiB or a quarter of the
+a capped row: a row is capped when `size_kb` exceeds 2 GiB or a quarter of the
 RAM. The 2 GiB cap is set to exceed the largest L3 caches, which pass 1 GiB on
 some CPUs, so that the chain can still reach RAM. The thread stays pinned to
 CPU 0 after the test; see [Thread Placement](./limitations.md#thread-placement).
