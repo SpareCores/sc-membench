@@ -8,7 +8,7 @@ carry, see the
 
 ## Requirements
 
-The tool is one C file, [`membench.c`](../membench.c), built with the
+The tool is a single C file, [`membench.c`](../membench.c), built with the
 [`Makefile`](../Makefile). The build and the binary need the following.
 
 Required, on all platforms:

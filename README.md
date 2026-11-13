@@ -1,17 +1,16 @@
 # membench
 
-This benchmark measures the memory bandwidth and latency of cloud servers with
+This benchmark measures memory bandwidth and latency on cloud servers with
 `membench`, a C tool that the Spare Cores team wrote with OpenMP. It sweeps
 per-thread buffer sizes derived from the detected CPU cache sizes (L1d, L2, and
-L3), from half the L1d cache to four times the L3 cache, so that the results
-trace each cache level and RAM.
+L3), from half the L1d cache to four times the L3 cache so the results trace
+each cache level and RAM.
 
-At each size, this benchmark reports the aggregate read, write, and copy
-bandwidth of all CPUs, and the latency of a single thread chasing pointers
-through the buffer in random order, as one CSV row
-per size and operation. It measures CPU memory local to the NUMA (Non-Uniform
-Memory Access) node of each thread, not access across NUMA nodes, per-thread or
-per-node bandwidth, or GPU memory, which
+At each size, it reports the aggregate read, write, and copy bandwidth of all
+CPUs and the latency of a single thread that chases pointers through the buffer
+in random order, as a CSV row per size and operation. It measures CPU memory
+local to each thread's NUMA (Non-Uniform Memory Access) node, not cross-NUMA
+access, per-thread or per-node bandwidth, or GPU memory, which
 [`nvbandwidth`](https://github.com/SpareCores/sc-images/tree/main/images/nvbandwidth)
 measures.
 
@@ -19,17 +18,17 @@ measures.
 
 [Spare Cores Navigator](https://docs.sparecores.com/overview) publishes
 empirical performance measurements for more than 5,000 cloud server types.
-This benchmark supplies four of its memory metrics: read, write, and copy
-bandwidth, and latency, each per buffer size, plus one RAM value per metric.
-See
+This benchmark supplies four memory metrics for Navigator results: read,
+write, and copy bandwidth, and latency, each per buffer size, plus one RAM
+value per metric. See
 [How the Navigator Uses the Results](./docs/usage.md#how-the-navigator-uses-the-results)
-for how the RAM value is picked.
+for how the RAM value is selected.
 
 To measure them, `membench` has the following properties:
 
 - In the image, it detects the caches with `hwloc` (Portable Hardware
   Locality).
-- It reports the latency as the median of 7 to 21 samples.
+- It reports latency as the median of 7 to 21 samples.
 - It runs the bandwidth operations as OpenMP threads.
 - It supports huge pages with `-H`.
 - It reads all of the data.
@@ -90,19 +89,19 @@ following:
 
 ## Usage
 
-Run the image via Docker. With no arguments, it sweeps the default sizes with
-all four operations on all CPUs, and prints a CSV to stdout:
+Run the image via Docker. With no arguments, it sweeps the default sizes across
+all four operations on all CPUs and prints a CSV to stdout:
 
 ```bash
 docker run --rm --privileged ghcr.io/sparecores/membench:main
 ```
 
-The `--privileged` option is required: the container entrypoint
+The `--privileged` option is required because the container entrypoint
 ([`Dockerfile`](./Dockerfile)) runs `membench` under `nice -n -20`, which needs
-`CAP_SYS_NICE`. Arguments after the image name go to `membench`, for example
-`-v` for a log on stderr. The image is built for 64-bit x86 servers with Intel
-or AMD CPUs (`linux/amd64`) and 64-bit Arm servers, such as AWS Graviton
-(`linux/arm64`), and `:main` is the tag to use; it runs version
+`CAP_SYS_NICE`. Arguments after the image name go to `membench`; for example,
+`-v` logs to stderr. The image is built for 64-bit x86 servers with Intel or
+AMD CPUs (`linux/amd64`) and 64-bit Arm servers, such as AWS Graviton
+(`linux/arm64`). Use the `:main` tag; the image runs version
 [1.2.2](./CHANGELOG.md#122-man-page) of the code.
 
 To run the tool without Docker, check the
@@ -142,9 +141,9 @@ targets, and [Running Without Docker](./docs/usage.md#running-without-docker)
 and [Usage Examples](./docs/usage.md#usage-examples) for more commands, such as
 a time limit or a single buffer size.
 
-Production runs the container privileged and with host networking, and passes
-`-Hv -t 1800` for huge pages, a verbose log, and a soft time limit of
-1,800 seconds:
+Production runs the container in privileged mode with host networking and passes
+`-Hv -t 1800` to enable huge pages, log verbosely, and apply a soft time
+limit of 1,800 seconds:
 
 ```bash
 docker run --rm --privileged --network host ghcr.io/sparecores/membench:main -Hv -t 1800 > stdout 2> stderr
@@ -184,12 +183,12 @@ options are the most common; see the
 
 ### Results
 
-Rows are printed to stdout as each measurement ends, one per size and
+Rows are printed to stdout as each measurement ends, one for each size and
 operation, with the aggregate bandwidth of all threads in MiB/s (see
 [Bandwidth Unit](./docs/limitations.md#bandwidth-unit)) and the latency in
 nanoseconds. See [CSV Output](./docs/usage.md#csv-output) for all columns,
 [Reading the Results](./docs/usage.md#reading-the-results) for where the cache
-levels show, and
+levels appear, and
 [How the Navigator Uses the Results](./docs/usage.md#how-the-navigator-uses-the-results)
 for what is published.
 

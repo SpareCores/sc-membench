@@ -2,8 +2,8 @@
 
 ## Running via Docker
 
-With no arguments, the image sweeps the default sizes with all four operations
-on all CPUs, and prints a CSV to stdout:
+With no arguments, the image sweeps the default sizes across all four
+operations on all CPUs and prints a CSV to stdout:
 
 ```bash
 docker run --rm --privileged ghcr.io/sparecores/membench:main
@@ -18,7 +18,7 @@ Arguments after the image name go to `membench`. The `--privileged` option is
 required, because raising the priority with `nice -n -20` needs
 `CAP_SYS_NICE`.
 
-The following examples show the common variations. To log the detected system
+The following examples cover common variations. To log the detected system
 to stderr and stop after about 5 minutes:
 
 ```bash
@@ -31,13 +31,13 @@ To test one per-thread buffer size of 1,024 KiB:
 docker run --rm --privileged ghcr.io/sparecores/membench:main -s 1024
 ```
 
-To use huge pages, with a log on stderr:
+To use huge pages with a log on stderr:
 
 ```bash
 docker run --rm --privileged ghcr.io/sparecores/membench:main -H -v
 ```
 
-To run only the latency test, with huge pages:
+To run only the latency test with huge pages:
 
 ```bash
 docker run --rm --privileged ghcr.io/sparecores/membench:main -H -o latency
@@ -67,15 +67,16 @@ and rebuilt on every push to the `main` branch of the
 [`sc-membench` repository](https://github.com/SpareCores/sc-membench). Use the
 `:main` tag; `:latest` points to the same build.
 
-A published GitHub release also pushes a tag with the release version, but
-the last release predates the image build, so the image has no version tag
-yet. The `:main` image runs version
-[1.2.2](../CHANGELOG.md#122-man-page) of the code, which `-V` prints.
+A GitHub release also pushes a tag with the release version, but the last
+release predates the image build, so the image has no version tag yet. The
+`:main` image runs version [1.2.2](../CHANGELOG.md#122-man-page) of the code,
+which `-V` prints.
 
-A run writes to stderr only with `-v` or `-R`, or when it fails to allocate a
-latency buffer. With `-v`, the log looks as follows on an AWS (Amazon Web
-Services) [`m7i.48xlarge`](https://sparecores.com/server/aws/m7i.48xlarge)
-server ([recorded
+A run writes to stderr only when `-v` or `-R` is set, or when it fails to
+allocate a latency buffer. With `-v`, the log looks as follows on an AWS
+(Amazon Web Services)
+[`m7i.48xlarge`](https://sparecores.com/server/aws/m7i.48xlarge) server
+([recorded
 log](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/m7i.48xlarge/0/membench/stderr)):
 
 <!--TW note: add embed?-->

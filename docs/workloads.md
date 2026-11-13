@@ -23,7 +23,7 @@ CPU cache sizes, L1d, L2, and L3 ([`membench.c`](../membench.c), `get_sizes`):
 | 2 × L3 | RAM |
 | 4 × L3 | RAM |
 
-The labels describe the latency rows and the one-thread bandwidth rows.
+These labels describe the latency rows and the one-thread bandwidth rows.
 A bandwidth row with more threads uses more memory in total, so with many
 threads it reaches RAM at a smaller per-thread size than the table shows.
 
@@ -119,7 +119,7 @@ a single-node host, the NUMA allocation makes no difference.
 
 ### Calibration
 
-One warmup read and one timed one-thread pass on the buffer of thread 0 set
+One warmup read and one timed single-thread pass on the buffer of thread 0 set
 the iteration count, the number of passes over the buffer, so that the passes
 would take about 0.25 seconds on one thread. The count is kept between 3 and
 10,000,000 iterations. All threads then run that count.
@@ -183,11 +183,10 @@ based on `ram_bench` by Emil Ernerfeldt ([`membench.c`](../membench.c),
 
 The result is the latency of the memory level that holds the chain: the L1d,
 L2, or L3 cache while the chain fits in it, and RAM at sizes beyond the L3
-cache. Latency runs on one thread and is
-measured once per size: apart from the warmup traversal in step 4, it has no
-discarded warmup try, unlike the bandwidth operations, and `-r` does not
-apply. The order of the nodes differs between runs, because the shuffle is
-seeded from the time.
+cache. Latency runs on one thread and is measured once per size. Apart from
+the warmup traversal in step 4, it has no discarded warmup try, unlike the
+bandwidth operations, and `-r` does not apply. The order of the nodes differs
+between runs because the shuffle is seeded from the time.
 
 The chain is capped at 2 GiB or a quarter of the RAM, whichever is smaller, and
 the row still prints the size of the sweep; see
