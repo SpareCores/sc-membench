@@ -2,13 +2,13 @@
 
 This benchmark measures the memory bandwidth and latency of cloud servers with
 `membench`, a C tool that the Spare Cores team wrote with OpenMP. It sweeps
-per-thread buffer sizes derived from the detected L1d, L2, and L3 cache sizes,
-from half the L1d cache to four times the L3 cache, so that the results trace
-each cache level and RAM.
+per-thread buffer sizes derived from the detected CPU cache sizes (L1d, L2, and
+L3), from half the L1d cache to four times the L3 cache, so that the results
+trace each cache level and RAM.
 
 At each size, this benchmark reports the aggregate read, write, and copy
 bandwidth of all CPUs, and the latency of a single thread chasing pointers
-through the buffer in random order, as one CSV (Comma-Separated Values) row
+through the buffer in random order, as one CSV row
 per size and operation. It measures CPU memory local to the NUMA (Non-Uniform
 Memory Access) node of each thread, not access across NUMA nodes, per-thread or
 per-node bandwidth, or GPU memory, which
@@ -18,41 +18,32 @@ measures.
 ## Purpose
 
 [Spare Cores Navigator](https://docs.sparecores.com/overview) publishes
-empirical performance measurements for more than 5,000 cloud server types,
-among them the
-[memory bandwidth](https://github.com/SpareCores/sc-images/blob/main/images/benchmark/docs/bw-mem.md)
-measured with LMbench's `bw_mem`.
-
-We ran `bw_mem` across 3000+ cloud server types, and the results were not
-always consistent with the detected L1d, L2, and L3 cache sizes. Some
-inconsistencies came from cache detection, which relied on the output of the
-`lscpu` command, and that output is sometimes wrong or incomplete; others
-traced back to `bw_mem` itself, so we wrote our own tool. The problems with
-`bw_mem` were the following:
-
-- Its `rd` mode reads every fourth word, so only 25% of the buffer is
-  accessed, and the reported bandwidth looks about 4x higher than the actual
-  throughput unless its `frd` mode is used.
-- It forks one process per parallel worker instead of starting threads, and
-  on servers with 96 or 192 vCPUs we saw unexpected slowdowns that we could
-  not reproduce or explain. This benchmark uses OpenMP threads instead.
-- It has no huge page support (it uses the `valloc` allocator, which returns
-  regular pages), so large-buffer latency tests pay TLB (Translation Lookaside
-  Buffer) overhead on top of the actual memory latency.
-- It reports a single latency number, while this benchmark collects several
-  independent samples per measurement and reports the median.
-
-The article
-[Modern Memory Bandwidth Benchmarks](https://sparecores.com/article/membench)
-describes the `bw_mem` findings in full, and
-[Comparison With LMbench](./docs/workloads.md#comparison-with-lmbench) lists
-the differences in method.
-
-The Navigator publishes four metrics from the
-output of this benchmark: read, write, and copy bandwidth, and latency, each
-per buffer size, plus one RAM value per metric. See
+empirical performance measurements for more than 5,000 cloud server types.
+This benchmark supplies four of its memory metrics: read, write, and copy
+bandwidth, and latency, each per buffer size, plus one RAM value per metric.
+See
 [How the Navigator Uses the Results](./docs/usage.md#how-the-navigator-uses-the-results)
 for how the RAM value is picked.
+
+To measure them, `membench` has the following properties:
+
+- In the image, it detects the caches with `hwloc` (Portable Hardware
+  Locality).
+- It reports the latency as the median of 7 to 21 samples.
+- It runs the bandwidth operations as OpenMP threads.
+- It supports huge pages with `-H`.
+- It reads all of the data.
+
+We created it because LMbench's
+[`bw_mem`](https://github.com/SpareCores/sc-images/blob/main/images/benchmark/docs/bw-mem.md),
+which measures the memory bandwidth that the Navigator already publishes,
+gave results that were not always consistent with the detected cache sizes,
+as our article on
+[modern memory bandwidth benchmarks](https://sparecores.com/article/membench)
+describes. See
+[Comparison With LMbench](./docs/workloads.md#comparison-with-lmbench) for
+the differences in method, and [Design History](#design-history) for the
+problems we found.
 
 ## Limitations
 
@@ -64,16 +55,16 @@ following:
   loops are plain C for the baseline instruction set, without hand-written
   SIMD (Single Instruction, Multiple Data) code or non-temporal stores.
 - **[Cache Detection](./docs/limitations.md#cache-detection):** The L3 size
-  is that of one shared L3 cache, not the server total. When `hwloc` (Portable
-  Hardware Locality) finds no caches, the sweep uses default cache sizes of
-  32 KiB (L1d), 256 KiB (L2), and 8 MiB (L3), as on 17 Arm server types in the
-  Navigator's [production runs](./docs/usage.md#production-setup).
+  is that of one shared L3 cache, not the server total. When `hwloc` finds no
+  caches, the sweep uses default cache sizes of 32 KiB for L1d, 256 KiB for L2,
+  and 8 MiB for L3, as on 17 Arm server types in the Navigator's
+  [production runs](./docs/usage.md#production-setup).
 - **[Container Limits](./docs/limitations.md#container-limits):** The CPU
   count and RAM size come from the host, not from Docker's `--cpus` or
   `--memory` limits.
 - **[Bandwidth Unit](./docs/limitations.md#bandwidth-unit):** The
-  `bandwidth_mb_s` column is in mebibytes per second (MiB/s), although its
-  name and the Navigator label it MB/s.
+  `bandwidth_mb_s` column is in MiB/s, although its name and the Navigator
+  label it MB/s.
 - **[Aggregate Bandwidth](./docs/limitations.md#aggregate-bandwidth):** The
   bandwidth is the total bytes of all threads divided by the time of the
   slowest thread, not a sum of per-thread bandwidths.
@@ -93,56 +84,63 @@ following:
   The `-t` time limit is checked only after each measurement, and the exit
   code is 0 even when a size could not be allocated.
 - **[Older Production Results](./docs/limitations.md#older-production-results):**
-  Results from versions 1.0.1 to 1.2.1 are published next to 1.2.2 results,
-  with the version noted.
+  Results from versions [1.0.1](./CHANGELOG.md#101-huge-pages-support) to
+  [1.2.1](./CHANGELOG.md#121-universal-binary) are published next to
+  [1.2.2](./CHANGELOG.md#122-man-page) results, with the version noted.
 
 ## Usage
 
 Run the image via Docker. With no arguments, it sweeps the default sizes with
-all four operations on all CPUs, and prints CSV to stdout:
+all four operations on all CPUs, and prints a CSV to stdout:
 
 ```bash
 docker run --rm --privileged ghcr.io/sparecores/membench:main
 ```
 
 The `--privileged` option is required: the container entrypoint
-([`Dockerfile`](./Dockerfile)) runs `membench` under `nice -n -20`, which needs `CAP_SYS_NICE`. Arguments after
-the image name go to `membench`, for example `-v` for a log on stderr. The
-image is built for `linux/amd64` and `linux/arm64`, and `:main` is the tag to
-use; it runs version [1.2.2](./CHANGELOG.md#122-man-page) of the code.
+([`Dockerfile`](./Dockerfile)) runs `membench` under `nice -n -20`, which needs
+`CAP_SYS_NICE`. Arguments after the image name go to `membench`, for example
+`-v` for a log on stderr. The image is built for 64-bit x86 servers with Intel
+or AMD CPUs (`linux/amd64`) and 64-bit Arm servers, such as AWS Graviton
+(`linux/arm64`), and `:main` is the tag to use; it runs version
+[1.2.2](./CHANGELOG.md#122-man-page) of the code.
 
 To run the tool without Docker, check the
 [packaging status](./docs/build.md#packages) for a distribution package, or
-build it from source:
+build it from source. To install the compiler and the libraries on Debian or
+Ubuntu:
 
 ```bash
-# Get the source
+sudo apt-get install build-essential libhugetlbfs-dev libhwloc-dev libnuma-dev
+```
+
+To get the source and build it, which links `hwloc`, `libnuma`, and
+`libhugetlbfs` when they are installed:
+
+```bash
 git clone https://github.com/SpareCores/sc-membench
 cd sc-membench
-
-# Install the compiler and the libraries (Debian/Ubuntu)
-sudo apt-get install build-essential libhugetlbfs-dev libhwloc-dev libnuma-dev
-
-# Build (links hwloc, libnuma, and libhugetlbfs when they are installed)
 make
+```
 
-# Run with default settings (all CPUs, cache-aware sizes)
+To run with the default settings (all CPUs, cache-aware sizes):
+
+```bash
 ./membench
+```
 
-# Log to stderr, and stop after about 5 minutes
-./membench -v -t 300
+To build with `hwloc` and `libnuma` (recommended for servers) and run with huge
+pages and a log:
 
-# Test one per-thread buffer size (1,024 KiB)
-./membench -s 1024
-
-# Build with hwloc and libnuma (recommended for servers), and use huge pages
+```bash
 make full
 ./membench-full -H -v
 ```
 
-See [Building From Source](./docs/build.md) for the other platforms and
-build targets, and [Usage Examples](./docs/usage.md#usage-examples) for more
-commands.
+See [Building From Source](./docs/build.md) for the other platforms and build
+targets, and [Running Without Docker](./docs/usage.md#running-without-docker)
+and [Usage Examples](./docs/usage.md#usage-examples) for more commands, such as
+a time limit or a single buffer size.
 
 Production runs the container privileged and with host networking, and passes
 `-Hv -t 1800` for huge pages, a verbose log, and a soft time limit of
@@ -155,9 +153,9 @@ docker run --rm --privileged --network host ghcr.io/sparecores/membench:main -Hv
 See [Production Setup](./docs/usage.md#production-setup) before comparing
 results with the Navigator's.
 
-Production runs of version 1.2.2 took 28 seconds at the fastest, 2 minutes
-11 seconds at the median, and 15 minutes 14 seconds at the slowest; 10% took
-more than 5 minutes 21 seconds. See
+Production runs of version [1.2.2](./CHANGELOG.md#122-man-page) took 28 seconds
+at the fastest, 2 minutes 11 seconds at the median, and 15 minutes 14 seconds at
+the slowest; 10% took more than 5 minutes 21 seconds. See
 [Run Duration](./docs/usage.md#run-duration) for what drives the time.
 
 ### Settings
@@ -168,9 +166,8 @@ variables that apply are listed under
 options are the most common; see the
 [full option list](./docs/usage.md#options) for all of them and their defaults:
 
-- `-v` logs the detected CPUs, memory, caches, NUMA (Non-Uniform Memory
-  Access) nodes, and the total runtime to stderr; `-vv` adds allocation,
-  huge page, and pinning lines.
+- `-v` logs the detected CPUs, memory, caches, NUMA nodes, and the total
+  runtime to stderr; `-vv` adds allocation, huge page, and pinning lines.
 - `-H` uses huge pages for buffers of at least twice the huge page size.
   Production passes it.
 - `-t SECONDS` stops the sweep after the first measurement that ends past the
@@ -183,13 +180,12 @@ options are the most common; see the
 - `-p THREADS` fixes the thread count.
 - `-a` tries 1, 2, 4, and so on up to the CPU count and keeps the best result
   per size.
-- `-R` prints a human-readable table, a summary, and scores instead of CSV.
+- `-R` prints a human-readable table, a summary, and scores instead of a CSV.
 
 ### Results
 
 Rows are printed to stdout as each measurement ends, one per size and
-operation, with the aggregate bandwidth of all threads in mebibytes per second
-(MiB/s; see
+operation, with the aggregate bandwidth of all threads in MiB/s (see
 [Bandwidth Unit](./docs/limitations.md#bandwidth-unit)) and the latency in
 nanoseconds. See [CSV Output](./docs/usage.md#csv-output) for all columns,
 [Reading the Results](./docs/usage.md#reading-the-results) for where the cache
@@ -228,10 +224,10 @@ size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,th
 [Memory Bandwidth of c8g.medium](https://sparecores.com/embed/server/aws/c8g.medium/bw_mem)
 
 Read bandwidth falls from 74,949 MiB/s (\~73 GiB/s) at 32 KiB to 27,008 MiB/s
-(\~26 GiB/s) at 128 MiB, and latency rises from 2.16 ns to 110.84 ns. The 32 MiB latency row stopped at
-the 21-sample limit with a CV (Coefficient of Variation) of about 10%, above
-the 5% target. The CV is `latency_stddev_ns` divided by `latency_ns`. The
-16 MiB row, not shown, stopped there too, at about 16%. See
+(\~26 GiB/s) at 128 MiB, and latency rises from 2.16 ns to 110.84 ns. The 32 MiB
+latency row stopped at the 21-sample limit with a CV (Coefficient of Variation)
+of about 10%, above the 5% target. The CV is `latency_stddev_ns` divided by
+`latency_ns`. The 16 MiB row, not shown, stopped there too, at about 16%. See
 [Latency Sampling](./docs/limitations.md#latency-sampling).
 
 ## Workloads
@@ -239,8 +235,9 @@ the 5% target. The CV is `latency_stddev_ns` divided by `latency_ns`. The
 All tests are in one C file, [`membench.c`](./membench.c). Each size runs
 the following operations in this fixed order; `-o` only filters them:
 
-- **[Read](./docs/workloads.md#read):** Every thread XORs all 64-bit words of
-  its buffer into eight accumulators, 256 bytes per unrolled loop step.
+- **[Read](./docs/workloads.md#read):** Every thread combines all 64-bit words
+  of its buffer with `XOR` into eight accumulators, 256 bytes per unrolled loop
+  step.
 - **[Write](./docs/workloads.md#write):** Every thread stores a 64-bit
   pattern to all words of its buffer.
 - **[Copy](./docs/workloads.md#copy):** Every thread copies its source buffer
@@ -262,30 +259,51 @@ for the thread count, calibration, and tries.
 
 ## Design History
 
-We wrote this benchmark in January 2026 after the `bw_mem` findings described
-under [Purpose](#purpose). The first release detected caches with `hwloc`,
-derived the sizes from them, pinned threads, bound memory to NUMA nodes, and
-matched the copy convention of `bw_mem`. The container image was built from
-`images/membench/` in the
+We ran LMbench's `bw_mem` across more than 3,000 cloud server types, and the
+results were not always consistent with the detected CPU cache sizes (L1d,
+L2, and L3). Some inconsistencies came from cache detection, which relied on
+the output of the `lscpu` command, and that output is sometimes wrong or
+incomplete; others traced back to `bw_mem` itself. The problems with `bw_mem`
+were the following:
+
+- Its `rd` mode reads every fourth word, so only 25% of the buffer is
+  accessed, and the reported bandwidth looks about 4x higher than the actual
+  throughput unless its `frd` mode is used.
+- It forks one process per parallel worker instead of starting threads, and
+  on servers with 96 or 192 vCPUs we saw unexpected slowdowns that we could
+  not reproduce or explain.
+- It has no huge page support (it uses the `valloc` allocator, which returns
+  regular pages), so large-buffer latency tests pay TLB (Translation Lookaside
+  Buffer) overhead on top of the actual memory latency.
+- Its latency companion, `lat_mem_rd`, reports one number per buffer size:
+  the fastest of several tries, in nanoseconds per load, with no measure of
+  spread. This benchmark reports the median of 7 to 21 samples, with their
+  standard deviation.
+
+We therefore wrote this benchmark in January 2026. The first release detected
+caches with `hwloc`, derived the sizes from them, pinned threads, bound
+memory to NUMA nodes, and matched the copy convention of `bw_mem`. The
+container image was built from `images/membench/` in the
 [`sc-images` repository](https://github.com/SpareCores/sc-images) from
 2026-01-05 until 2026-02-27, when the [`Dockerfile`](./Dockerfile) moved to the
 [`sc-membench` repository](https://github.com/SpareCores/sc-membench).
 
 The releases that followed added the following:
 
-- 1.0.1: huge page support.
-- 1.0.2: measurements that run until a target time or a maximum iteration
-  count.
-- 1.0.3: a new latency test adapted from `ram_bench`, plus macOS and BSD
-  (Berkeley Software Distribution) support.
-- 1.1.0: a rewrite of the bandwidth tests to OpenMP.
-- 1.2.0: the human-readable output and scores.
-- 1.2.1: a single binary per architecture, built for its baseline instruction
-  set.
-- 1.2.2: a man page.
+- [1.0.1](./CHANGELOG.md#101-huge-pages-support): huge page support.
+- [1.0.2](./CHANGELOG.md#102-more-consistent-results): measurements that run
+  until a target time or a maximum iteration count.
+- [1.0.3](./CHANGELOG.md#103-multi-platform-and-new-latency-benchmark): a new
+  latency test adapted from `ram_bench`, plus macOS and BSD (Berkeley Software
+  Distribution) support.
+- [1.1.0](./CHANGELOG.md#110-openmp): a rewrite of the bandwidth tests to OpenMP.
+- [1.2.0](./CHANGELOG.md#120-human-readable-output-and-scores): the human-readable output and scores.
+- [1.2.1](./CHANGELOG.md#121-universal-binary): a single binary per
+  architecture, built for its baseline instruction set.
+- [1.2.2](./CHANGELOG.md#122-man-page): a man page.
 
-Since 1.2.2, only the Docker build and CI changed, so the `:main` image runs
-1.2.2 code.
+Since [1.2.2](./CHANGELOG.md#122-man-page), only the Docker build and CI
+changed, so the `:main` image runs [1.2.2](./CHANGELOG.md#122-man-page) code.
 
 Earlier latency measurements with and without huge pages on an Azure and an
 AWS server type are kept with the release details in the

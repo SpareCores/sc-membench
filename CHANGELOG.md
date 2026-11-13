@@ -82,7 +82,7 @@ on aarch64), so one binary runs on every CPU of the architecture.
 ## 1.2.0: Human-Readable Output and Scores
 
 Released 2026-01-26. Added `-R`, which prints a table, a summary, and the
-Bandwidth, Latency, and Combined scores instead of CSV, after user feedback.
+Bandwidth, Latency, and Combined scores instead of a CSV, after user feedback.
 
 ## 1.1.0: OpenMP
 

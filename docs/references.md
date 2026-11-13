@@ -5,6 +5,12 @@ OpenMP, TLB) are defined in the
 [glossary](https://docs.sparecores.com/glossary) of the Spare Cores docs,
 which also lists the terms each image uses.
 
+- **Bandwidth Score**: One of the three membench scores: the mean of the
+  peak read, write, and copy bandwidths / 1,000, in units of 1,000 MiB/s,
+  which `membench` labels "GB/s". A higher score is better.
+- **Combined Score**: One of the three membench scores:
+  100 × √(Bandwidth Score × Latency Score), with no unit. As a geometric
+  mean, it lets neither bandwidth nor latency dominate.
 - **`hwloc`** (Portable Hardware Locality): A library and set of tools that
   report the hardware topology of a host in the same way on every operating
   system. The topology covers NUMA nodes, sockets, cores, hardware threads,
@@ -16,6 +22,9 @@ which also lists the terms each image uses.
   time of one load in nanoseconds, which shows the latency of each cache
   level and of main memory.
   [`lat_mem_rd` manual](https://github.com/intel/lmbench/blob/master/doc/lat_mem_rd.8)
+- **Latency Score**: One of the three membench scores: 1,000 / the latency
+  in ns at the largest buffer size tested, that is, dependent loads per
+  microsecond. A higher score is better.
 - **`libhugetlbfs`**: A Linux library that helps programs use huge pages, for
   example by backing their heap with them, and that reports the huge page
   sizes the system supports.
@@ -43,12 +52,9 @@ which also lists the terms each image uses.
   limits its memory use: it halves the thread count of a bandwidth
   measurement until the buffers of all threads fit in a quarter of the
   system's RAM.
-- **membench scores**, **Bandwidth Score**, **Latency Score**,
-  **Combined Score**: The three numbers that `membench` prints in its
-  human-readable summary. The Bandwidth Score is the mean of the peak read,
-  write, and copy bandwidths divided by 1,000, the Latency Score is 1,000
-  divided by the latency at the largest buffer size, and the Combined Score
-  is the square root of their product times 100.
+- **membench scores**: The three numbers that `membench` prints in its
+  human-readable summary: the Bandwidth Score, the Latency Score, and the
+  Combined Score.
 - **membench size sweep**, **size sweep**, **sweep**: The series of
   per-thread buffer sizes that `membench` tests in one run, in ascending
   order. By default, it holds up to 10 sizes placed around the L1d, L2, and

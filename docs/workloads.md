@@ -2,13 +2,13 @@
 
 ## Buffer Sizes
 
-Every size is the buffer size of *one* thread, so the memory in use is the
-size times the thread count, and twice that for copy, which needs a source and
+Every size is the buffer size of *one* thread, so the memory in use is
+`size_kb` × `threads`, and twice that for copy, which needs a source and
 a destination buffer. For example, at 1 MiB with four threads, read and write
 use 4 MiB in total, and copy uses 8 MiB.
 
 The default membench size sweep derives the following sizes from the detected
-L1d, L2, and L3 cache sizes ([`membench.c`](../membench.c), `get_sizes`):
+CPU cache sizes, L1d, L2, and L3 ([`membench.c`](../membench.c), `get_sizes`):
 
 | Size | What it shows |
 | --- | --- |
@@ -24,9 +24,8 @@ L1d, L2, and L3 cache sizes ([`membench.c`](../membench.c), `get_sizes`):
 | 4 × L3 | RAM |
 
 The labels describe the latency rows and the one-thread bandwidth rows.
-A bandwidth row with more threads uses the size times the thread count in
-total, so with many threads it reaches RAM at a smaller per-thread size than
-the table shows.
+A bandwidth row with more threads uses more memory in total, so with many
+threads it reaches RAM at a smaller per-thread size than the table shows.
 
 Each size is rounded to the nearest power of 2. A size is kept only if it is
 larger than the previous one and at most the sweep limit, which is half of
@@ -48,21 +47,24 @@ copy, and latency in that order.
 ### Cache Detection
 
 The cache sizes come from `hwloc` (Portable Hardware Locality): the first L1d,
-L2, and L3 cache object it reports. The L3 size is therefore the size of one shared L3 cache (one die or
-socket), not a per-core share and not the total. When a server has several L3
-caches, `-v` prints a note with their count.
+L2, and L3 cache object it reports. The L3 size is therefore the size of one
+shared L3 cache (one die or socket), not a per-core share and not the total.
+When a server has several L3 caches, `-v` prints a note with their count.
 
-For example, an AWS (Amazon Web Services) `m7i.48xlarge` server has two L3
-caches, the first of 105 MiB, and its sweep ends at 512 MiB per thread. An AWS
-`c8a.metal-48xl` server has 24 L3 caches of 32 MiB each, and its sweep ends at
-128 MiB per thread, four times one of them
-([recorded output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8a.metal-48xl/0/membench/stdout)).
+For example, an AWS (Amazon Web Services)
+[`m7i.48xlarge`](https://sparecores.com/server/aws/m7i.48xlarge) server has two
+L3 caches, the first of 105 MiB, and its sweep ends at 512 MiB per thread. An
+AWS [`c8a.metal-48xl`](https://sparecores.com/server/aws/c8a.metal-48xl) server
+has 24 L3 caches of 32 MiB each, and its sweep ends at 128 MiB per thread, four
+times one of them ([recorded
+output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8a.metal-48xl/0/membench/stdout)).
 
 If `hwloc` reports no caches, the sizes fall back to the following defaults:
 32 KiB for L1d, 256 KiB for L2, and 8 MiB for L3. The sweep then runs from
 16 KiB up to 32 MiB, regardless of the real cache sizes. In production, 17
 server types print exactly these defaults. All of them have Ampere Altra-class
-Arm CPUs; one is Hetzner Cloud `cax11`
+Arm CPUs; one is Hetzner Cloud
+[`cax11`](https://sparecores.com/server/hcloud/cax11)
 ([recorded log](https://github.com/SpareCores/sc-inspector-data/blob/main/data/hcloud/cax11/0/membench/stderr)).
 
 The defaults apply per level ([`membench.c`](../membench.c), `use_defaults`):
@@ -91,10 +93,11 @@ RAM size are those of the host; see
 The membench memory guard halves the thread count until the size times the
 thread count (times two for copy) is at most a quarter of the RAM. With `-a`,
 thread counts that would exceed it are skipped. The guard is stricter than the
-[sweep limit](#buffer-sizes), so a size between the two stays in the sweep
-and runs on fewer threads. For example, on `m7i.48xlarge`, copy at
-512 MiB ran on 96 of the 192 threads
-([recorded output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/m7i.48xlarge/0/membench/stdout)).
+[sweep limit](#buffer-sizes), so a size between the two stays in the sweep and
+runs on fewer threads. For example, on
+[`m7i.48xlarge`](https://sparecores.com/server/aws/m7i.48xlarge), copy at 512
+MiB ran on 96 of the 192 threads ([recorded
+output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/m7i.48xlarge/0/membench/stdout)).
 The `threads` column shows the count each row used.
 
 ### Placement
@@ -129,9 +132,9 @@ frequency ramp up. Every try allocates its buffers again.
 
 ### Bandwidth
 
-The reported value is the per-thread size times the thread
-count times the iteration count, divided by the elapsed time of the slowest
-thread. It is the aggregate of all threads, not a per-thread value; see
+The reported value is `bandwidth_mb_s` = (`size_kb` × `threads` × `iterations` /
+1,024) / `elapsed_s`, where `elapsed_s` is the time of the slowest thread. It is
+the aggregate of all threads, not a per-thread value; see
 [Aggregate Bandwidth](./limitations.md#aggregate-bandwidth) for what that means
 and [Bandwidth Unit](./limitations.md#bandwidth-unit) for its unit.
 
@@ -140,8 +143,8 @@ the architecture; see [Plain C Loops](./limitations.md#plain-c-loops).
 
 ## Read
 
-Every thread reads all 64-bit words of its buffer and XORs them into eight
-independent accumulators, 256 bytes per unrolled loop step
+Every thread reads all 64-bit words of its buffer and combines them with `XOR`
+into eight independent accumulators, 256 bytes per unrolled loop step
 ([`membench.c`](../membench.c), `mem_read`).
 
 ## Write
@@ -160,11 +163,9 @@ or write bandwidth.
 
 ## Latency
 
-The latency test measures the time of one dependent load: a memory access
-whose address comes from the previous access, so that the CPU cannot overlap
-or prefetch the accesses. The method is pointer chasing, based on
-`ram_bench` by Emil Ernerfeldt ([`membench.c`](../membench.c),
-`measure_latency_stats`), and works as follows:
+The latency test measures the time of one dependent load by pointer chasing,
+based on `ram_bench` by Emil Ernerfeldt ([`membench.c`](../membench.c),
+`measure_latency_stats`), as follows:
 
 1. Pin the thread to CPU 0, so that the scheduler cannot move it during the
    measurement. On a host with more than one NUMA node, bind the memory to
@@ -180,20 +181,21 @@ or prefetch the accesses. The method is pointer chasing, based on
 6. Report the median of the samples in nanoseconds per access, with their
    standard deviation and count.
 
-At small sizes, this measures the hit latency of the L1d, L2, and L3 caches,
-and at large sizes the RAM latency. Latency runs on one thread and is
+The result is the latency of the memory level that holds the chain: the L1d,
+L2, or L3 cache while the chain fits in it, and RAM at sizes beyond the L3
+cache. Latency runs on one thread and is
 measured once per size: apart from the warmup traversal in step 4, it has no
 discarded warmup try, unlike the bandwidth operations, and `-r` does not
 apply. The order of the nodes differs between runs, because the shuffle is
 seeded from the time.
 
-The chain is capped at 2 GiB or a quarter of the RAM, whichever is smaller,
-and the row still prints the size of the sweep; see
-[Latency Sampling](./limitations.md#latency-sampling). The output does not
-mark a capped row: it is capped when `size_kb` exceeds 2 GiB or a quarter of
-the RAM. The 2 GiB cap is set to exceed the largest L3 caches, which pass 1 GiB
-on some CPUs, so that the chain can still reach RAM. The thread stays pinned to CPU 0 after the test;
-see [Thread Placement](./limitations.md#thread-placement).
+The chain is capped at 2 GiB or a quarter of the RAM, whichever is smaller, and
+the row still prints the size of the sweep; see
+[Latency Sampling](./limitations.md#latency-sampling). The output does not mark
+a capped row: it is capped when `size_kb` exceeds 2 GiB or a quarter of the
+RAM. The 2 GiB cap is set to exceed the largest L3 caches, which pass 1 GiB on
+some CPUs, so that the chain can still reach RAM. The thread stays pinned to
+CPU 0 after the test; see [Thread Placement](./limitations.md#thread-placement).
 
 ## Huge Pages
 
@@ -209,8 +211,8 @@ is read from `Hugepagesize` in `/proc/meminfo`, and is 2 MiB if that fails,
 which makes the threshold 4 MiB. A binary built with `libhugetlbfs` asks
 that library for the size first.
 
-THP needs no pre-allocated pool, but the host's THP mode must be `madvise`
-or `always`, and the tool does not check it. To use explicit huge pages, see
+THP takes effect only when the host's THP mode is `madvise` or `always`, and
+the tool does not check it. To use explicit huge pages, see
 [Explicit Huge Pages](./usage.md#explicit-huge-pages).
 
 In the image, `-H` covers the latency chain and bandwidth rows whose
@@ -236,15 +238,15 @@ and `lat_mem_rd` of LMbench, with the following differences:
 | Size reported | Per-thread buffer size | Per-process buffer size |
 | Read | All of the data (`read`) | `rd` reads every fourth word, 25% of the buffer; `frd` reads all |
 | Operations | All in one run; `-o` selects | One invocation per operation, such as `bw_mem 64m rd` and `bw_mem 64m wr` |
-| Output | CSV (Comma-Separated Values) on stdout | Text on stderr |
+| Output | CSV on stdout | Text on stderr |
 | Huge pages | `-H` | None (uses `valloc`) |
 | Latency chain | 16-byte nodes (payload and pointer) in random order, visiting all nodes | 8-byte pointers at a fixed backward stride, 64 bytes by default on 64-bit |
-| Latency result | Median of 7 to 21 samples, with standard deviation and count | One measurement |
+| Latency result | Median of 7 to 21 samples, with standard deviation and count | Minimum of several tries, in ns per load, with no spread |
 | Pinning | Latency on CPU 0, with NUMA-local memory | None |
 
 Both report copy as the buffer size divided by the time.
 
-Both latency tests use dependent loads, which prevent pipelining. A fixed
+Both latency tests use dependent loads. A fixed
 stride can be detected by stride prefetchers: the
 [`lat_mem_rd` man page](https://github.com/intel/lmbench/blob/master/doc/lat_mem_rd.8)
 calls the test "vulnerable to smart, stride-sensitive cache prefetching

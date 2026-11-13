@@ -22,7 +22,7 @@ For a quick local check, `make test` builds `membench` and runs
 
 ## Building the Image
 
-Build the image from the repository root:
+To build the image from the repository root:
 
 ```bash
 docker build -t membench .

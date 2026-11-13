@@ -23,11 +23,11 @@ thread count, the [sweep limit](./workloads.md#buffer-sizes), or the
 
 ### Bandwidth Unit
 
-The code divides bytes by 1,048,576, so `bandwidth_mb_s` is in mebibytes per
-second (MiB/s). The column name, the usage text, and the label in
-[Spare Cores Navigator](https://docs.sparecores.com/overview) call it MB/s. The
-`-R` table divides the MiB/s value by 1,000 for each larger label, so a value
-shown as "GB/s" is in units of 1,000 MiB/s.
+The code divides bytes by 1,048,576, so `bandwidth_mb_s` is in MiB/s. The column
+name, the usage text, and the label in [Spare Cores
+Navigator](https://docs.sparecores.com/overview) call it MB/s. The `-R` table
+divides the MiB/s value by 1,000 for each larger label, so a value shown as
+"GB/s" is in units of 1,000 MiB/s.
 
 The `size_kb` column is in KiB (bytes divided by 1,024).
 
@@ -39,9 +39,9 @@ The sweep follows the caches that `hwloc` (Portable Hardware Locality)
 reports, so its sizes are only as good as that detection:
 
 - The L3 size is that of the first L3 cache object, which is one shared L3
-  cache. On a server with several L3 caches, the largest sweep size, 4 × L3,
-  is four times one of them, not four times their total. With `-v`, stderr labels the size
-  "(per core)", which it is not.
+  cache. On a server with several L3 caches, the largest sweep size, 4 × L3, is
+  four times one of them, not four times their total. With `-v`, stderr labels
+  the size "(per core)", which it is not.
 - When `hwloc` finds no caches, the sizes follow the defaults of 32 KiB,
   256 KiB, and 8 MiB instead of the real caches. In
   [production](./usage.md#production-setup), this happens on 17 server types
@@ -75,23 +75,23 @@ describe what the code does and does not control:
 
 ### Memory Guard
 
-The membench memory guard applies at sizes where the buffers of all threads
-would exceed a quarter of the RAM: it halves the thread count until they fit.
-Rows of one run can therefore have
-different `threads` values, and their bandwidths are not directly comparable.
-In production, 453 runs have at least one bandwidth row with fewer threads
-than the run's largest thread count. Compare the `threads` column before
+The membench memory guard lowers the thread count at sizes where the buffers of
+all threads would exceed a quarter of the RAM. Rows of one run can therefore
+have different `threads` values, and their bandwidths are not directly
+comparable. In production, 453 runs have at least one bandwidth row with fewer
+threads than the run's largest thread count. Compare the `threads` column before
 comparing bandwidths at large sizes.
 
 ### Latency Sampling
 
 The latency test has the following constraints:
 
-- Sampling stops at 21 samples whatever the CV (Coefficient of Variation), so
-  a row with 21 samples can have a CV above the 5% target. For example, the
-  16,384 KiB row of an AWS (Amazon Web Services) `c8g.medium` run reports
-  24.76 ns with a standard deviation of 4.03 ns, a CV of about 16%
-  ([recorded output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.medium/0/membench/stdout)).
+- Sampling stops at 21 samples whatever the CV (Coefficient of Variation), so a
+  row with 21 samples can have a CV above the 5% target. For example, the 16,384
+  KiB row of an AWS (Amazon Web Services)
+  [`c8g.medium`](https://sparecores.com/server/aws/c8g.medium) run reports 24.76
+  ns with a standard deviation of 4.03 ns, a CV of about 16% ([recorded
+  output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.medium/0/membench/stdout)).
 - The chain is capped at 2 GiB or a quarter of the RAM, whichever is smaller,
   but `size_kb` still shows the size of the sweep. The default sweep ends at
   4 × L3, so the cap matters mainly with `-f`.
@@ -119,9 +119,9 @@ run can pass it by the length of one measurement. It is ignored with `-s`.
 The tool handles no signals.
 
 The exit code is 0 after every run that starts measuring; an invalid or
-unknown option exits with 1 before that. A measurement whose buffers cannot
-be allocated prints no row. Only `-v` logs a failed bandwidth allocation; a
-failed latency allocation is always logged.
+unknown option exits with 1 before that. A measurement prints a row only
+when its buffers can be allocated. Only `-v` logs a failed bandwidth
+allocation; a failed latency allocation is always logged.
 
 To find a dropped measurement, run with `-v` and compare the output with the
 log. The `Testing N buffer sizes` line gives the number of sizes, and the
@@ -133,12 +133,14 @@ limit, which the log reports as `Time limit reached`.
 
 ### Older Production Results
 
-Production results from versions 1.0.1 to 1.2.1 are published next to those
-of [1.2.2](../CHANGELOG.md#122-man-page), with the version recorded in the `version` field of each run's
-`meta.json`. Version 1.0.3 changed the latency method, and 1.1.0 moved the
-bandwidth operations to OpenMP. Five of the oldest runs have a CSV
-(Comma-Separated Values) with seven columns, without `latency_stddev_ns` and
-`latency_samples`.
+Production results from versions [1.0.1](../CHANGELOG.md#101-huge-pages-support)
+to [1.2.1](../CHANGELOG.md#121-universal-binary) are published next to those of
+[1.2.2](../CHANGELOG.md#122-man-page), with the version recorded in the
+`version` field of each run's `meta.json`. Version
+[1.0.3](../CHANGELOG.md#103-multi-platform-and-new-latency-benchmark) changed
+the latency method, and [1.1.0](../CHANGELOG.md#110-openmp) moved the bandwidth
+operations to OpenMP. Five of the oldest runs have a CSV with seven columns,
+without `latency_stddev_ns` and `latency_samples`.
 
 We plan to rerun the server types that have older results, with no date set
 yet. Until then, check the version of each result before comparing two server

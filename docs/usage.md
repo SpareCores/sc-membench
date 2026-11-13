@@ -3,7 +3,7 @@
 ## Running via Docker
 
 With no arguments, the image sweeps the default sizes with all four operations
-on all CPUs, and prints CSV (Comma-Separated Values) to stdout:
+on all CPUs, and prints a CSV to stdout:
 
 ```bash
 docker run --rm --privileged ghcr.io/sparecores/membench:main
@@ -18,45 +18,64 @@ Arguments after the image name go to `membench`. The `--privileged` option is
 required, because raising the priority with `nice -n -20` needs
 `CAP_SYS_NICE`.
 
-The following commands show the common variations:
+The following examples show the common variations. To log the detected system
+to stderr and stop after about 5 minutes:
 
 ```bash
-# Log the detected system to stderr, and stop after about 5 minutes
 docker run --rm --privileged ghcr.io/sparecores/membench:main -v -t 300
+```
 
-# Test one per-thread buffer size of 1,024 KiB
+To test one per-thread buffer size of 1,024 KiB:
+
+```bash
 docker run --rm --privileged ghcr.io/sparecores/membench:main -s 1024
+```
 
-# Use huge pages, with a log on stderr
+To use huge pages, with a log on stderr:
+
+```bash
 docker run --rm --privileged ghcr.io/sparecores/membench:main -H -v
+```
 
-# Run only the latency test, with huge pages
+To run only the latency test, with huge pages:
+
+```bash
 docker run --rm --privileged ghcr.io/sparecores/membench:main -H -o latency
+```
 
-# Save the CSV to a file
+To save the CSV to a file:
+
+```bash
 docker run --rm --privileged ghcr.io/sparecores/membench:main -H > results.csv
+```
 
-# Keep the CSV and the log in separate files
+To keep the CSV and the log in separate files:
+
+```bash
 docker run --rm --privileged ghcr.io/sparecores/membench:main -Hv > results.csv 2> membench.log
+```
 
-# Print the version of the tool
+To print the version of the tool:
+
+```bash
 docker run --rm --privileged ghcr.io/sparecores/membench:main -V
 ```
 
-The image is published for `linux/amd64` and `linux/arm64` and rebuilt on
-every push to the `main` branch of the
+The image is published for 64-bit x86 servers with Intel or AMD CPUs
+(`linux/amd64`) and 64-bit Arm servers, such as AWS Graviton (`linux/arm64`),
+and rebuilt on every push to the `main` branch of the
 [`sc-membench` repository](https://github.com/SpareCores/sc-membench). Use the
 `:main` tag; `:latest` points to the same build.
 
-A published GitHub release also pushes a tag with the release version, but no
-release has been published since the image build was added, so no version tag
-exists yet. The `:main` image runs version
+A published GitHub release also pushes a tag with the release version, but
+the last release predates the image build, so the image has no version tag
+yet. The `:main` image runs version
 [1.2.2](../CHANGELOG.md#122-man-page) of the code, which `-V` prints.
 
-Without `-v` or `-R`, a run prints nothing to stderr unless a latency buffer
-cannot be allocated. With `-v`, the log looks as follows on an AWS
-(Amazon Web Services) `m7i.48xlarge` server
-([recorded
+A run writes to stderr only with `-v` or `-R`, or when it fails to allocate a
+latency buffer. With `-v`, the log looks as follows on an AWS (Amazon Web
+Services) [`m7i.48xlarge`](https://sparecores.com/server/aws/m7i.48xlarge)
+server ([recorded
 log](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/m7i.48xlarge/0/membench/stderr)):
 
 <!--TW note: add embed?-->
@@ -94,19 +113,28 @@ Install `membench` from a distribution package, or build it from source:
   [Recommended Build](./build.md#recommended-build) for the commands on a
   server.
 
-The binary takes the same options as the image. Run it as follows:
+The binary takes the same options as the image. To run with the default
+settings, which use all CPUs and sizes derived from the caches:
 
 ```bash
-# Run with the default settings: all CPUs, sizes derived from the caches
 ./membench
+```
 
-# Log to stderr, and stop after about 5 minutes (300 seconds)
+To log to stderr and stop after about 5 minutes (300 seconds):
+
+```bash
 ./membench -v -t 300
+```
 
-# Test one per-thread buffer size of 1,024 KiB (1 MiB)
+To test one per-thread buffer size of 1,024 KiB (1 MiB):
+
+```bash
 ./membench -s 1024
+```
 
-# Run the binary built with `make numa`, with a log
+To run the binary built with `make numa`, with a log:
+
+```bash
 ./membench-numa -v
 ```
 
@@ -120,36 +148,67 @@ The following commands use the native binary; with the image, put the same
 options after the image name, as in [Running via Docker](#running-via-docker).
 See [Options](#options) for every option and its default.
 
+To use huge pages for large buffers, which is recommended for benchmarking
+(with `libnuma`, only the latency chain and one-thread bandwidth rows use
+them):
+
 ```bash
-# Use huge pages for large buffers (with libnuma, only the latency chain and
-# one-thread bandwidth rows); recommended for benchmarking
 ./membench -H
+```
 
-# The same, with a log that shows the detected system and the runtime
+To use huge pages with a log that shows the detected system and the runtime:
+
+```bash
 ./membench -H -v
+```
 
-# Print a human-readable table, a summary, and scores instead of CSV
+To print a human-readable table, a summary, and scores instead of a CSV:
+
+```bash
 ./membench -R
+```
 
-# Run each bandwidth measurement 5 times instead of 3, and keep the best
+To run each bandwidth measurement 5 times instead of 3, and keep the best:
+
+```bash
 ./membench -r 5
+```
 
-# Run each bandwidth measurement once, for the shortest runtime
+To run each bandwidth measurement once, for the shortest runtime:
+
+```bash
 ./membench -r 1
+```
 
-# Use exactly 16 threads for the bandwidth operations
+To use exactly 16 threads for the bandwidth operations:
+
+```bash
 ./membench -p 16
+```
 
-# Try 1, 2, 4, and so on up to the CPU count, and keep the best per size
+To try 1, 2, 4, and so on up to the CPU count, and keep the best per size:
+
+```bash
 ./membench -a
+```
 
-# Extend the sweep with 512 MiB, 1 GiB, and larger sizes up to the sweep limit
+To extend the sweep with 512 MiB, 1 GiB, and larger sizes up to the sweep
+limit:
+
+```bash
 ./membench -f
+```
 
-# Run only the read and latency operations
+To run only the read and latency operations:
+
+```bash
 ./membench -o read -o latency
+```
 
-# Bind each thread to a whole core instead of a hardware thread (OpenMP places)
+To bind each thread to a whole core instead of a hardware thread (OpenMP
+places):
+
+```bash
 OMP_PLACES=cores ./membench
 ```
 
@@ -160,12 +219,11 @@ see [Environment Variables](#environment-variables).
 
 With `-H`, a buffer of at least twice the huge page size first tries explicit
 huge pages, then THP (Transparent Huge Pages), then regular pages; see
-[Huge Pages](./workloads.md#huge-pages). THP needs no pre-allocated pool, but
-it takes effect only when the host's THP mode, in
-`/sys/kernel/mm/transparent_hugepage/enabled`, is `madvise` or `always`, and
-the tool does not check that mode. Explicit huge pages come from a pool that
-must be pre-allocated, and when that pool runs out, the buffer falls back to
-THP.
+[Huge Pages](./workloads.md#huge-pages). THP takes effect only when the
+host's THP mode, in `/sys/kernel/mm/transparent_hugepage/enabled`, is
+`madvise` or `always`, and the tool does not check that mode. Explicit huge
+pages come from a pool that must be pre-allocated, and when that pool runs
+out, the buffer falls back to THP.
 
 The `-vv` option logs the huge page path of each allocation. For THP, it
 shows only that the `madvise` call succeeded, not that the kernel used huge
@@ -176,43 +234,51 @@ explicit huge pages or THP is not published, so the page type behind the
 published latency results is unknown, and a run of the image may get a
 different one.
 
-With `libnuma`, as in the image, in `make numa` and `make full` builds, and
-in a plain `make` build that detects it, multi-thread bandwidth buffers never
-use huge pages; see [Huge Pages Scope](./limitations.md#huge-pages-scope).
-The pool then only has to hold the latency chain, which is capped at 2 GiB or a
-quarter of the RAM, whichever is smaller. When the thread count is 1, the bandwidth buffers
-also come from the pool: the size, and twice that for copy.
+With `libnuma`, as in the image, in `make numa` and `make full` builds, and in a
+plain `make` build that detects it, multi-thread bandwidth buffers never use
+huge pages; see [Huge Pages Scope](./limitations.md#huge-pages-scope). The pool
+then only has to hold the latency chain, which is capped at 2 GiB or a quarter
+of the RAM, whichever is smaller. When the thread count is 1, the bandwidth
+buffers also come from the pool: the size, and twice that for copy.
 
-To pre-allocate explicit huge pages of 2 MiB for the latency test, as root:
+To pre-allocate explicit huge pages of 2 MiB for the latency test, first
+check the current huge page status:
 
 ```bash
-# Check current huge page status
 grep Huge /proc/meminfo
+```
 
-# LATENCY tests run on one thread, on a chain of at most 2 GiB:
-#   256 MiB buffer: 256 / 2 = 128 pages (256 MiB)
-#   2 GiB chain (the cap): 2,048 / 2 = 1,024 pages (2 GiB)
+The latency test runs on one thread, on a chain of at most 2 GiB. A 256 MiB
+buffer needs 256 / 2 = 128 pages (256 MiB), and the 2 GiB chain of the cap
+needs 2,048 / 2 = 1,024 pages (2 GiB).
 
-# Allocate huge pages (requires root); adjust for the host
+To allocate the 1,024 pages of the 2 GiB cap as root (replace the count with
+the one for the host):
+
+```bash
 echo 1024 | sudo tee /proc/sys/vm/nr_hugepages
+```
 
-# Run with huge pages (will use explicit huge pages if available)
+To run with huge pages, which uses the explicit huge pages if they are
+available:
+
+```bash
 ./membench -H -v
 ```
 
 A binary built without `libnuma` also takes its multi-thread bandwidth
-buffers from the pool. Size the pool for them as follows:
+buffers from the pool. The number of huge pages that the bandwidth tests
+(read, write, and copy) need is threads × buffer size × 2 / 2 MiB, as copy
+uses a source and a destination buffer. For example, with a 256 MiB buffer:
+
+- 8 CPUs: 8 × 256 × 2 / 2 = 2,048 pages (4 GiB)
+- 64 CPUs: 64 × 256 × 2 / 2 = 16,384 pages (32 GiB)
+- 192 CPUs: 192 × 256 × 2 / 2 = 49,152 pages (96 GiB)
+
+To allocate the 49,152 pages of the 192-CPU example as root (replace the count
+with the one for the host):
 
 ```bash
-# Calculate huge pages needed for BANDWIDTH tests (read/write/copy):
-#   threads × buffer_size × 2 (for copy: src+dst) / 2 MiB
-#
-# Examples:
-#   8 CPUs,  256 MiB buffer:   8 × 256 × 2 / 2 =  2,048 pages (4 GiB)
-#   64 CPUs, 256 MiB buffer:  64 × 256 × 2 / 2 = 16,384 pages (32 GiB)
-#  192 CPUs, 256 MiB buffer: 192 × 256 × 2 / 2 = 49,152 pages (96 GiB)
-
-# Allocate huge pages (requires root); adjust for the host
 echo 49152 | sudo tee /proc/sys/vm/nr_hugepages
 ```
 
@@ -221,27 +287,32 @@ needs.
 
 ## Run Duration
 
-Production runs of version 1.2.2 whose `meta.json` records an `exit_code` of 0
-(2,317 runs) took the following times, read from the `Total runtime` line of
-their stderr:
+Production runs of version [1.2.2](../CHANGELOG.md#122-man-page) whose
+`meta.json` records an `exit_code` of 0 (2,317 runs) took the following times,
+read from the `Total runtime` line of their stderr:
 
 | Run | Duration | Server type |
 | --- | --- | --- |
-| Fastest | 28.0s | [`aws/c8a.medium`](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8a.medium/0/membench/stderr) |
+| Fastest | 28.0s | [`aws/c8a.medium`](https://sparecores.com/server/aws/c8a.medium) ([recorded log](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8a.medium/0/membench/stderr)) |
 | Median | 130.6s | |
 | 90th percentile | 320.9s | |
-| Slowest | 914.3s | [`gcp/c4-highmem-288`](https://github.com/SpareCores/sc-inspector-data/blob/main/data/gcp/c4-highmem-288/0/membench/stderr) |
+| Slowest | 914.3s | [`gcp/c4-highmem-288`](https://sparecores.com/server/gcp/c4-highmem-288) ([recorded log](https://github.com/SpareCores/sc-inspector-data/blob/main/data/gcp/c4-highmem-288/0/membench/stderr)) |
 
 The longest run of any version took 1,428.6 seconds, on
-[`aws/i7ie.48xlarge`](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/i7ie.48xlarge/0/membench/stderr)
-with version 1.0.2. No production run reached the limit of 1,800 seconds.
+[`aws/i7ie.48xlarge`](https://sparecores.com/server/aws/i7ie.48xlarge) with
+version [1.0.2](../CHANGELOG.md#102-more-consistent-results) ([recorded
+log](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/i7ie.48xlarge/0/membench/stderr)).
+No production run reached the limit of 1,800 seconds.
 
-A one-thread pass on the buffer of thread 0 sets the iteration count so
-that this pass takes about 0.25 seconds, and then all threads run that count.
+Before each measurement, one thread times a single pass over its buffer and
+sets the iteration count, the number of passes, so that one thread would need
+about 0.25 seconds for them (see [Calibration](./workloads.md#calibration)).
+All threads then run that count.
 When the threads together are limited by memory bandwidth, one multi-thread
 measurement can therefore take several seconds: `elapsed_s` reaches about
-4.3 seconds in production
-([`aws/c8g.48xlarge` output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.48xlarge/0/membench/stdout)).
+4.3 seconds in production,
+on [`aws/c8g.48xlarge`](https://sparecores.com/server/aws/c8g.48xlarge)
+([recorded output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.48xlarge/0/membench/stdout)).
 
 Each bandwidth measurement also runs four times: one discarded warmup try and
 three tries.
@@ -259,14 +330,15 @@ but 79.0 seconds by its stderr.
 ## Production Setup
 
 The [Inspector](https://docs.sparecores.com/overview#how-it-works) of
-[Spare Cores Navigator](https://docs.sparecores.com/overview) runs this image as the `membench` task
+[Spare Cores Navigator](https://docs.sparecores.com/overview) runs this image
+as the `membench` task
 ([`tasks.py`](https://github.com/SpareCores/sc-inspector/blob/main/inspector/tasks.py)).
 A plain `docker run` differs from the production setup as follows:
 
 | Setting | Production | Plain `docker run` |
 | --- | --- | --- |
 | Arguments | `-Hv -t 1800`: huge pages, a log on stderr, and a soft limit of 1,800s | None: regular pages, no log, and no time limit |
-| Privileges | Privileged container | Not privileged unless `--privileged` is passed, which the image requires |
+| Privileges | Privileged container | Privileged only with `--privileged`, which the image requires |
 | Network | Host networking, which comes from the shared `DOCKER_OPTS` of the Inspector, not from the image | Docker's default network |
 | Timeout | The task is stopped after 40 min | None |
 | Version | Recorded in `meta.json` from a separate `-V` call | Not recorded |
@@ -293,7 +365,7 @@ usage that `resource-tracker` samples is not published.
 ## CSV Output
 
 Rows are printed to stdout as each measurement ends, one per size and
-operation, under the following header:
+operation, after a header row that names the columns:
 
 ```text
 size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,threads,iterations,elapsed_s
@@ -305,7 +377,7 @@ The columns are the following:
 | --- | --- |
 | `size_kb` | The per-thread buffer size in KiB. |
 | `operation` | `read`, `write`, `copy`, or `latency`. |
-| `bandwidth_mb_s` | The aggregate bandwidth of all threads in mebibytes per second (MiB/s), and `0` for latency rows. |
+| `bandwidth_mb_s` | The aggregate bandwidth of all threads in MiB/s, and `0` for latency rows. |
 | `latency_ns` | The median time of one dependent load in nanoseconds, and `0` for bandwidth rows. |
 | `latency_stddev_ns` | The sample standard deviation of the latency samples, and `0` for bandwidth rows. |
 | `latency_samples` | The count of the latency samples (7 to 21), and `0` for bandwidth rows. |
@@ -313,8 +385,8 @@ The columns are the following:
 | `iterations` | The number of passes over the buffer per thread in the kept try for bandwidth rows, and the sample count for latency rows. |
 | `elapsed_s` | The duration of the timed loop of the slowest thread for bandwidth rows, and the wall time including chain allocation for latency rows. |
 
-The memory in use for a row is `size_kb` times `threads`, and twice that for
-copy. See [Results](../README.md#results) for an example.
+The memory in use for a row, in KiB, is `size_kb` × `threads`, and twice
+that for copy. See [Results](../README.md#results) for an example.
 
 ## Reading the Results
 
@@ -325,7 +397,7 @@ Bandwidth drops and latency rises as the buffer size passes each cache level:
 - The next is at the L2 boundary: the L2 size on the same line, such as
   2 MiB per thread on that server.
 - The last comes when the memory in use exceeds the L3 cache. That point
-  depends on the thread count: a bandwidth row uses `size_kb` times `threads`,
+  depends on the thread count: a bandwidth row uses `size_kb` × `threads`,
   while latency runs on one thread.
 
 Compare the `threads` column before comparing bandwidths at large sizes; see
@@ -349,19 +421,19 @@ level, as the Navigator records it for the server type. That is the total of
 the L3 caches, else of the L2 caches, else of the L1d caches, not the size
 of one L3 cache that the sweep uses; see
 [Cache Detection](./limitations.md#cache-detection). The comparison uses the
-per-thread size, not `size_kb` times `threads`.
+per-thread size, not `size_kb` × `threads`.
 
-When no row exceeds that total, or the Navigator has no cache size for the
-server type, no RAM value is published.
+A RAM value is published only when a row exceeds that total and the
+Navigator has a cache size for the server type.
 
 The `-R` summary and scores are not published; production does not pass
-`-R`. Results of versions before 1.2.2 are still published, with the version
+`-R`. Results of versions before [1.2.2](../CHANGELOG.md#122-man-page) are still published, with the version
 noted; see
 [Older Production Results](./limitations.md#older-production-results).
 
 ## Human-Readable Output
 
-With `-R`, `membench` prints a table to stdout instead of CSV, and a summary
+With `-R`, `membench` prints a table to stdout instead of a CSV, and a summary
 with scores to stderr:
 
 ```bash
@@ -373,16 +445,20 @@ MiB/s value of the CSV by 1,000 for each larger label, so a value shown as
 "GB/s" is in units of 1,000 MiB/s. The summary holds the following values, of
 which the last three are the membench scores:
 
-- **Peak:** the highest bandwidth of each bandwidth operation over all sizes.
-- **Weighted Avg:** the average bandwidth of each operation, weighted by the
-  base-2 logarithm of the size, so larger buffers count more.
+- **Peak:** the highest bandwidth of each bandwidth operation over all
+  sizes, in MiB/s (labeled "MB/s").
+- **Weighted Avg:** Σ(bandwidth × w) / (Σ w) over all sizes of the
+  operation, with w = log₂(`size_kb` + 1), so larger buffers count more,
+  in MiB/s.
 - **Best latency:** the tool's label for the latency at the largest size
-  tested, the closest to RAM latency. The size picks it, not the lowest value.
-- **Bandwidth Score:** the mean of the three peaks, divided by 1,000.
-- **Latency Score:** 1,000 divided by the best latency in nanoseconds.
-- **Combined Score:** the square root of the product of the two scores,
-  multiplied by 100. As a geometric mean, it lets neither bandwidth nor
-  latency dominate.
+  tested, the closest to RAM latency, in ns. The size picks it, not the
+  lowest value.
+- **Bandwidth Score** = mean of the peaks / 1,000, in units of 1,000 MiB/s
+  (labeled "GB/s").
+- **Latency Score** = 1,000 / best latency in ns, that is, dependent loads
+  per microsecond.
+- **Combined Score** = 100 × √(Bandwidth Score × Latency Score), with no
+  unit. As a geometric mean, it lets neither bandwidth nor latency dominate.
 
 A higher score is better: a higher bandwidth raises the Bandwidth Score, and a
 lower best latency raises the Latency Score.
