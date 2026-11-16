@@ -75,7 +75,8 @@ following:
   after the first latency test.
 - **[Memory Guard](./docs/limitations.md#memory-guard):** At sizes where the
   buffers of all threads would exceed a quarter of the RAM, the thread count
-  is halved until they fit, so the rows of one run can differ in `threads`.
+  is halved, down to one thread, so the rows of one run can differ in
+  `threads`. The buffers of one thread can still exceed a quarter of the RAM.
 - **[Latency Sampling](./docs/limitations.md#latency-sampling):** Sampling
   stops at 21 samples even when they still vary more than the 5% target, and
   latency is measured once per size, on CPU 0 only.

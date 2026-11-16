@@ -51,7 +51,7 @@ which also lists the terms each image uses.
 - **membench memory guard**, **memory guard**: The rule with which `membench`
   limits its memory use: it halves the thread count of a bandwidth
   measurement until the buffers of all threads fit in a quarter of the
-  system's RAM.
+  system's RAM, but not below one thread, whose buffers are not checked.
 - **membench scores**: The three numbers that `membench` prints in its
   human-readable summary: the Bandwidth Score, the Latency Score, and the
   Combined Score.

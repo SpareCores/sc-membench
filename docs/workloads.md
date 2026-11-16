@@ -91,8 +91,12 @@ RAM size are those of the host; see
 ### Memory Guard
 
 The membench memory guard halves the thread count until the size times the
-thread count (times two for copy) is at most a quarter of the RAM. With `-a`,
-thread counts that would exceed it are skipped. The guard is stricter than the
+thread count (times two for copy) is at most a quarter of the RAM, but not
+below one thread. With `-a`, thread counts that would exceed it are skipped,
+and when every count is skipped, the run uses one thread. At one thread, the
+buffers are not checked against the quarter of the RAM, so they can exceed
+it: with `-s`, which has no sweep limit, with `-p 1`, or on a host with one
+vCPU. The guard is stricter than the
 [sweep limit](#buffer-sizes), so a size between the two stays in the sweep and
 runs on fewer threads. For example, on
 [`m7i.48xlarge`](https://sparecores.com/server/aws/m7i.48xlarge), copy at 512

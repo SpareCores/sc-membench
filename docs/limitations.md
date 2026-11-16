@@ -81,7 +81,9 @@ following points describe what the code does and does not control:
 ### Memory Guard
 
 The membench memory guard lowers the thread count at sizes where the buffers of
-all threads would exceed a quarter of the RAM. Rows of one run can therefore
+all threads would exceed a quarter of the RAM. It stops at one thread, whose
+buffers can still exceed that; see
+[Memory Guard](./workloads.md#memory-guard). Rows of one run can therefore
 have different `threads` values, and their bandwidths are not directly
 comparable. In production, 453 runs have at least one bandwidth row with fewer
 threads than the run's largest thread count. Compare the `threads` column before
