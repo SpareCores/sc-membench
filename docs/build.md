@@ -113,9 +113,12 @@ says what the target does:
 | `make help` | None | Prints the build targets |
 
 Set `CC` to use another compiler. The compiler flags are `-O3`, `-Wall`,
-`-Wextra`, `-std=c11`, and `-fopenmp`, with `-march=x86-64` and
-`-mtune=generic` on Linux x86_64 and `-mcpu=generic+crc` on aarch64 (arm64),
-so that one binary runs on every CPU of the architecture.
+`-Wextra`, `-std=c11`, and `-fopenmp`, with the following baseline flags, so
+that one binary runs on every CPU of the architecture:
+
+- `-march=x86-64` and `-mtune=generic` on Linux x86_64 and on the BSDs
+- `-mcpu=generic+crc` on Linux aarch64 (arm64)
+- `-mcpu=generic` on macOS arm64
 
 ## Recommended Build
 

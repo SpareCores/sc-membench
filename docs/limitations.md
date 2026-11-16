@@ -132,9 +132,12 @@ The exit code is 0 after every run that starts measuring. Only an unknown
 option, an unknown `-o` value, or a numeric value out of range exits with 1
 before that. A value with trailing text runs with its leading number, and a
 mistyped `-t abc` runs with no time limit; see [Options](./usage.md#options).
-A measurement prints a row only
-when its buffers can be allocated. Only `-v` logs a failed bandwidth
-allocation; a failed latency allocation is always logged.
+A measurement prints a row only when its buffers can be allocated. A failed
+latency allocation is always logged, and a failed bandwidth allocation with
+more than one thread only with `-v`. A failed one-thread bandwidth allocation
+is never logged, even with `-vv`; one-thread runs happen with `-p 1`, on a
+host with one vCPU, in the first step of `-a`, and when the memory guard
+reduces a run to one thread.
 
 To find a dropped measurement, run with `-v` and compare the output with the
 log. The `Testing N buffer sizes` line gives the number of sizes, and the
