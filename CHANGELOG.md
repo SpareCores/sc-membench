@@ -14,8 +14,9 @@ including its `-h` usage text, said otherwise:
   MB/s.
 - Aggregate bandwidth is the total bytes divided by the time of the slowest
   thread, not the sum of per-thread bandwidths.
-- `OMP_NUM_THREADS` has no effect, and `OMP_PROC_BIND` is overridden by the
-  `proc_bind(spread)` clause in the code; `OMP_PLACES` still applies.
+- `OMP_NUM_THREADS` has no effect, and the `proc_bind(spread)` clause binds
+  no thread unless `OMP_PROC_BIND` or `OMP_PLACES` is set, which the image
+  does not do.
 - With `libnuma`, multi-thread bandwidth buffers come from
   `numa_alloc_onnode` and bypass `-H`; `-H` applies to latency buffers and
   one-thread runs.

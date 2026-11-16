@@ -68,9 +68,10 @@ following:
 - **[Aggregate Bandwidth](./docs/limitations.md#aggregate-bandwidth):** The
   bandwidth is the total bytes of all threads divided by the time of the
   slowest thread, not a sum of per-thread bandwidths.
-- **[Thread Placement](./docs/limitations.md#thread-placement):** The
-  `OMP_NUM_THREADS` and `OMP_PROC_BIND` variables do not change the bandwidth
-  operations, and thread 0 stays on CPU 0 after the first latency test.
+- **[Thread Placement](./docs/limitations.md#thread-placement):** In a default
+  run, the bandwidth threads are not bound to CPUs, because the image sets
+  neither `OMP_PROC_BIND` nor `OMP_PLACES`. Only thread 0 is pinned, to CPU 0,
+  after the first latency test.
 - **[Memory Guard](./docs/limitations.md#memory-guard):** At sizes where the
   buffers of all threads would exceed a quarter of the RAM, the thread count
   is halved until they fit, so the rows of one run can differ in `threads`.

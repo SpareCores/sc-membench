@@ -103,12 +103,12 @@ The `threads` column shows the count each row used.
 ### Placement
 
 The threads run in an OpenMP parallel region with the
-`proc_bind(spread)` clause. Each thread allocates its own buffer inside that
+`proc_bind(spread)` clause, which in the image binds them only when
+`OMP_PROC_BIND` or `OMP_PLACES` is set; see
+[Thread Placement](./limitations.md#thread-placement). Each thread allocates its own buffer inside that
 region and writes to all of it before the measurement. With `libnuma`
 available, as in the image, the buffer is allocated on the NUMA
-(Non-Uniform Memory Access) node of the CPU that the thread runs on. The
-`OMP_NUM_THREADS` and `OMP_PROC_BIND` environment variables do not change
-this; see [Environment Variables](./usage.md#environment-variables).
+(Non-Uniform Memory Access) node of the CPU that the thread runs on.
 
 The `spread` policy is meant to distribute the threads evenly across the NUMA
 nodes and physical cores, so that every memory controller is used and the

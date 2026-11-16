@@ -206,15 +206,16 @@ To run only the read and latency operations:
 ./membench -o read -o latency
 ```
 
-To bind each thread to a whole core instead of a hardware thread (OpenMP
-places):
+To bind the bandwidth threads to whole cores, which a default run does not
+do (OpenMP places):
 
 ```bash
 OMP_PLACES=cores ./membench
 ```
 
-`OMP_PROC_BIND` and `OMP_NUM_THREADS` do not change the bandwidth operations;
-see [Environment Variables](#environment-variables).
+Setting `OMP_PLACES` or `OMP_PROC_BIND` turns binding on, and
+`OMP_NUM_THREADS` does not change the bandwidth operations; see
+[Thread Placement](./limitations.md#thread-placement).
 
 ## Explicit Huge Pages
 
@@ -517,8 +518,9 @@ The text that `-h` prints is out of date on the following five points:
 - The bandwidth unit is MiB/s, not MB/s.
 - `-t` is a soft limit, checked after each measurement and ignored with `-s`,
   not a "maximum runtime".
-- The `OMP_NUM_THREADS` and `OMP_PROC_BIND` variables do not change the thread
-  count or the placement.
+- `OMP_PROC_BIND=spread` is not the default: with neither `OMP_PROC_BIND`
+  nor `OMP_PLACES` set, no bandwidth thread is bound. `OMP_NUM_THREADS` does
+  not change the thread count.
 
 The man page, `membench.1`, repeats the statements about the default sweep, the
 `-H` threshold, and the `OMP_*` variables. For the buffers that `-H` covers,
@@ -533,8 +535,8 @@ unknown option. A `-r` value below 1 is set to 1 instead
 | Variable | Meaning | Default |
 | --- | --- | --- |
 | `TRACKER_QUIET` | Silences the output of `resource-tracker`. | `true` |
-| `OMP_PLACES` | The standard OpenMP list of places that threads can be bound to, such as `cores`. | Unset |
-| `OMP_PROC_BIND` | No effect on the bandwidth operations: the `proc_bind(spread)` clause in the code takes precedence. | Unset |
+| `OMP_PLACES` | The standard OpenMP list of places that threads can be bound to, such as `cores`. Setting it turns binding of the bandwidth threads on; see [Thread Placement](./limitations.md#thread-placement). | Unset |
+| `OMP_PROC_BIND` | Any value other than `false` turns binding of the bandwidth threads on, and the `proc_bind(spread)` clause in the code then sets the policy. Unset, as in the image, no thread is bound. | Unset |
 | `OMP_NUM_THREADS` | No effect on the bandwidth operations: the code sets its own thread count; use `-p` instead. | Unset |
 
 See [CSV Output](#csv-output) for the output columns.

@@ -59,12 +59,17 @@ value. Copy counts the buffer size once, as `bw_mem` does.
 
 ### Thread Placement
 
-The bandwidth threads run under the OpenMP `proc_bind(spread)` clause, and
-the image sets neither `OMP_PLACES` nor `OMP_PROC_BIND`. The following points
-describe what the code does and does not control:
+The bandwidth threads run under the OpenMP `proc_bind(spread)` clause, but in
+the image the clause takes effect only when `OMP_PROC_BIND` or `OMP_PLACES` is
+set. The image sets neither, so in a default run no bandwidth thread is bound
+to a CPU, and the scheduler can move the threads during a measurement. The
+following points describe what the code does and does not control:
 
-- `OMP_NUM_THREADS` and `OMP_PROC_BIND` have no effect on the bandwidth
-  operations, although the usage text of the tool lists them.
+- Setting `OMP_PROC_BIND` to any value other than `false`, or setting
+  `OMP_PLACES`, turns binding on, and the `spread` clause then sets the
+  policy; see [Environment Variables](./usage.md#environment-variables).
+- `OMP_NUM_THREADS` has no effect on the bandwidth operations, although the
+  usage text of the tool lists it.
 - The map of CPUs to NUMA (Non-Uniform Memory Access) nodes that `-v` prints
   is not used to place threads.
 - The latency test pins the main thread to CPU 0 and does not restore its
