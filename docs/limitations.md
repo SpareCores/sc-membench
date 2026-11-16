@@ -95,8 +95,11 @@ The latency test has the following constraints:
   Variation), so a row with 21 samples can have a CV above the 5% target. For
   example, the 16,384 KiB row of an AWS (Amazon Web Services)
   [`c8g.medium`](https://sparecores.com/server/aws/c8g.medium) run reports 24.76
-  ns with a standard deviation of 4.03 ns, a CV of about 16% ([recorded
+  ns with a standard deviation of 4.03 ns, about 16% of the median ([recorded
   output](https://github.com/SpareCores/sc-inspector-data/blob/main/data/aws/c8g.medium/0/membench/stdout)).
+- The CV is the standard deviation divided by the mean of the samples, while
+  `latency_ns` is their median. The CSV has neither the mean nor the CV, so
+  the CV cannot be recomputed exactly from the output.
 - The chain is capped at 2 GiB or a quarter of the RAM, whichever is smaller,
   but `size_kb` still shows the size of the sweep. The default sweep ends at
   4 × L3, so the cap matters mainly with `-f`.

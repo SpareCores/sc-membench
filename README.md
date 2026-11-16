@@ -230,9 +230,11 @@ size_kb,operation,bandwidth_mb_s,latency_ns,latency_stddev_ns,latency_samples,th
 
 Read bandwidth falls from 74,949 MiB/s (\~73 GiB/s) at 32 KiB to 27,008 MiB/s
 (\~26 GiB/s) at 128 MiB, and latency rises from 2.16 ns to 110.84 ns. The 32 MiB
-latency row stopped at the 21-sample limit with a CV (Coefficient of Variation)
-of about 10%, above the 5% target. The CV is `latency_stddev_ns` divided by
-`latency_ns`. The 16 MiB row, not shown, stopped there too, at about 16%. See
+latency row stopped at the 21-sample limit before the CV (Coefficient of
+Variation) of its samples fell below the 5% target; its standard deviation is
+about 10% of its median. The CV is the standard deviation divided by the mean
+of the samples, and the CSV has no mean, so the CV cannot be recomputed exactly
+from the output. The 16 MiB row, not shown, stopped at the limit too. See
 [Latency Sampling](./docs/limitations.md#latency-sampling).
 
 ## Workloads
