@@ -15,8 +15,16 @@ The container entrypoint is
 the
 [`resource-tracker` image](https://github.com/SpareCores/sc-images/tree/main/images/resource-tracker).
 Arguments after the image name go to `membench`. The `--privileged` option is
-required, because raising the priority with `nice -n -20` needs
-`CAP_SYS_NICE`.
+recommended, because it grants `CAP_SYS_NICE`, which the run uses in two
+ways:
+
+- Raising the priority with `nice -n -20` needs it. Without it, `nice`
+  prints `nice: cannot set niceness: Permission denied` to stderr and runs
+  `membench` without the raised priority; the exit code stays 0.
+- Docker's default seccomp profile allows the NUMA memory-policy system calls
+  `get_mempolicy`, `mbind`, and `set_mempolicy` only with it. Whether the
+  NUMA allocation of `membench` works without `--privileged` has not been
+  tested.
 
 The following examples cover common variations. To log the detected system
 to stderr and stop after about 5 minutes:
@@ -72,8 +80,9 @@ release predates the image build, so the image has no version tag yet. The
 `:main` image runs version [1.2.2](../CHANGELOG.md#122-man-page) of the code,
 which `-V` prints.
 
-A run writes to stderr only when `-v` or `-R` is set, or when it fails to
-allocate a latency buffer. With `-v`, the log looks as follows on an AWS
+A run writes to stderr only when `-v` or `-R` is set, when it fails to
+allocate a latency buffer, or, without `--privileged`, when `nice` warns that
+it cannot raise the priority. With `-v`, the log looks as follows on an AWS
 (Amazon Web Services)
 [`m7i.48xlarge`](https://sparecores.com/server/aws/m7i.48xlarge) server
 ([recorded
@@ -339,7 +348,7 @@ A plain `docker run` differs from the production setup as follows:
 | Setting | Production | Plain `docker run` |
 | --- | --- | --- |
 | Arguments | `-Hv -t 1800`: huge pages, a log on stderr, and a soft limit of 1,800s | None: regular pages, no log, and no time limit |
-| Privileges | Privileged container | Privileged only with `--privileged`, which the image requires |
+| Privileges | Privileged container | Privileged only with `--privileged`, which is recommended; see [Running via Docker](#running-via-docker) |
 | Network | Host networking, which comes from the shared `DOCKER_OPTS` of the Inspector, not from the image | Docker's default network |
 | Timeout | The task is stopped after 40 min | None |
 | Version | Recorded in `meta.json` from a separate `-V` call | Not recorded |

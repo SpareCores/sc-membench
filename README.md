@@ -99,9 +99,12 @@ all four operations on all CPUs and prints a CSV to stdout:
 docker run --rm --privileged ghcr.io/sparecores/membench:main
 ```
 
-The `--privileged` option is required because the container entrypoint
+The `--privileged` option is recommended: the container entrypoint
 ([`Dockerfile`](./Dockerfile)) runs `membench` under `nice -n -20`, which needs
-`CAP_SYS_NICE`. Arguments after the image name go to `membench`; for example,
+`CAP_SYS_NICE`, and Docker's default seccomp profile allows the NUMA system
+calls only with it. See
+[Running via Docker](./docs/usage.md#running-via-docker) for what changes
+without it. Arguments after the image name go to `membench`; for example,
 `-v` logs to stderr. The image is built for 64-bit x86 servers with Intel or
 AMD CPUs (`linux/amd64`) and 64-bit Arm servers, such as AWS Graviton
 (`linux/arm64`). Use the `:main` tag; the image runs version

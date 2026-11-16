@@ -30,7 +30,9 @@ including its `-h` usage text, said otherwise:
 - Latency sampling stops at 21 samples regardless of the CV.
 - Plain `make` detects and links `hwloc`, `libnuma`, and `libhugetlbfs`;
   `make basic` is the minimal build.
-- `--privileged` is needed for the `nice -n -20` entrypoint.
+- `--privileged` is recommended, not required: without it, `nice -n -20`
+  prints a warning to stderr and `membench` still runs; see
+  [Running via Docker](./docs/usage.md#running-via-docker).
 - `-V` prints the version and exits.
 
 On macOS, CI builds with Homebrew LLVM clang, because Apple clang ships no
