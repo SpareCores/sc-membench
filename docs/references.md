@@ -62,7 +62,9 @@ which also lists the terms each image uses.
 - **`proc_bind(spread)`**: An OpenMP clause that sets the thread affinity
   policy of a parallel region. With `spread`, the runtime distributes the
   threads as evenly as possible over the available places, such as cores or
-  sockets, and keeps each thread on its place.
+  sockets, and keeps each thread on its place. In GCC's OpenMP runtime
+  (`libgomp`), the clause binds no thread unless the `OMP_PROC_BIND` or
+  `OMP_PLACES` environment variable is set.
   [OpenMP specification](https://www.openmp.org/spec-html/5.0/openmpsu36.html)
 - **`ram_bench`**: A small C++ benchmark by Emil Ernerfeldt that measures the
   cost of random memory access by traversing linked lists of growing size

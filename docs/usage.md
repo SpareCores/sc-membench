@@ -109,7 +109,10 @@ Note that the L3 size on the `Cache` line is the size of one shared L3 cache,
 although the line labels all three sizes "(per core)", and that the "Minimum
 total test size" is printed but not used. The "KB" of the cache sizes is KiB:
 the code divides bytes by 1,024
-([`membench.c`](../membench.c#L979-L982)). See
+([`membench.c`](../membench.c#L979-L982)). The `OpenMP` line is printed whenever
+the bandwidth operations run, and it does not show that the threads are bound:
+they are bound only when `OMP_PROC_BIND` or `OMP_PLACES` is set, as [Thread
+Placement](./limitations.md#thread-placement) describes. See
 [Cache Detection](./workloads.md#cache-detection) for what the sizes mean.
 
 ## Running Without Docker
