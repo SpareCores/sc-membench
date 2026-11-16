@@ -105,15 +105,19 @@ The `threads` column shows the count each row used.
 The threads run in an OpenMP parallel region with the
 `proc_bind(spread)` clause, which in the image binds them only when
 `OMP_PROC_BIND` or `OMP_PLACES` is set; see
-[Thread Placement](./limitations.md#thread-placement). Each thread allocates its own buffer inside that
-region and writes to all of it before the measurement. With `libnuma`
-available, as in the image, the buffer is allocated on the NUMA
-(Non-Uniform Memory Access) node of the CPU that the thread runs on.
+[Thread Placement](./limitations.md#thread-placement).
+Each thread allocates its own buffer inside that region and writes to all of
+it before the measurement. With `libnuma` available, as in the image, the
+buffer is allocated on the NUMA (Non-Uniform Memory Access) node of the CPU
+that the thread is on at that moment.
 
-The `spread` policy is meant to distribute the threads evenly across the NUMA
-nodes and physical cores, so that every memory controller is used and the
-scheduler does not move threads between cores. The NUMA-local buffers avoid
-cross-node accesses and page migrations during the measurement. Because no
+With binding on, the `spread` policy is meant to distribute the threads evenly
+across the NUMA nodes and physical cores, so that every memory controller is
+used and the scheduler does not move threads between cores. The NUMA-local
+buffers then avoid cross-node accesses and page migrations during the
+measurement. In a default run, without binding, the scheduler can move a
+thread after it has allocated its buffer, so the buffer is not guaranteed to
+stay local. Because no
 two threads share a buffer, they do not contend for the same cache lines. On
 a single-node host, the NUMA allocation makes no difference.
 
@@ -241,7 +245,7 @@ and `lat_mem_rd` of LMbench, with the following differences:
 | Huge pages | `-H` | None (uses `valloc`) |
 | Latency chain | 16-byte nodes (payload and pointer) in random order, visiting all nodes | 8-byte pointers at a fixed backward stride, 64 bytes by default on 64-bit |
 | Latency result | Median of 7 to 21 samples, with standard deviation and count | Minimum of several tries, in ns per load, with no spread |
-| Pinning | Latency on CPU 0, with NUMA-local memory | None |
+| Pinning | Latency on CPU 0, with NUMA-local memory; bandwidth threads only when `OMP_PROC_BIND` or `OMP_PLACES` is set | None |
 
 Both report copy as the buffer size divided by the time.
 

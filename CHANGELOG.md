@@ -189,7 +189,9 @@ bandwidth; see
 
 With thread pinning, NUMA-local memory, best-of tries, and latency sampling,
 the benchmark variability was stated as typically <1%, compared to 30-60%
-without them.
+without them. The current code pins the bandwidth threads only when
+`OMP_PROC_BIND` or `OMP_PLACES` is set; see
+[Behavior Checked Against the Code](#behavior-checked-against-the-code).
 
 ### Example Output on Azure D96pls_v6
 

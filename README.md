@@ -8,10 +8,11 @@ each cache level and RAM.
 
 At each size, it reports the aggregate read, write, and copy bandwidth of all
 CPUs and the latency of a single thread that chases pointers through the buffer
-in random order, as one CSV row per size and operation. It measures CPU memory
-local to each thread's NUMA (Non-Uniform Memory Access) node. It does not
-measure cross-NUMA access, per-thread or per-node bandwidth, or GPU memory,
-which
+in random order, as one CSV row per size and operation. Each thread's buffer
+is allocated on the NUMA (Non-Uniform Memory Access) node of the CPU the thread
+is on at that moment, but in a default run the threads are not bound, so the
+buffers are not guaranteed to stay local. It does not measure cross-NUMA access
+separately, per-thread or per-node bandwidth, or GPU memory, which
 [`nvbandwidth`](https://github.com/SpareCores/sc-images/tree/main/images/nvbandwidth)
 measures.
 
@@ -249,7 +250,8 @@ the following operations in this fixed order; `-o` only filters them:
   current size, and the median of 7 to 21 timed samples is reported.
 
 The bandwidth operations run on all online CPUs as OpenMP threads, each with
-its own buffer on the NUMA node of the CPU it runs on. Each bandwidth
+its own buffer on the NUMA node of the CPU it is on when the buffer is
+allocated. Each bandwidth
 measurement runs one discarded warmup, then three tries, and the best try is
 kept.
 
