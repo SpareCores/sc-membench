@@ -126,8 +126,11 @@ The `-t` limit is soft: it is checked only after each measurement ends, so a
 run can pass it by the length of one measurement. It is ignored with `-s`.
 The tool handles no signals.
 
-The exit code is 0 after every run that starts measuring; an invalid or
-unknown option exits with 1 before that. A measurement prints a row only
+The exit code is 0 after every run that starts measuring. Only an unknown
+option, an unknown `-o` value, or a numeric value out of range exits with 1
+before that. A value with trailing text runs with its leading number, and a
+mistyped `-t abc` runs with no time limit; see [Options](./usage.md#options).
+A measurement prints a row only
 when its buffers can be allocated. Only `-v` logs a failed bandwidth
 allocation; a failed latency allocation is always logged.
 

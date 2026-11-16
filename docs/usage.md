@@ -535,9 +535,18 @@ The man page, `membench.1`, repeats the statements about the default sweep, the
 `-H` threshold, and the `OMP_*` variables. For the buffers that `-H` covers,
 see [Huge Pages](./workloads.md#huge-pages).
 
-An invalid value of `-p`, `-s`, `-t`, or `-o` exits with code 1, as does an
-unknown option. A `-r` value below 1 is set to 1 instead
-([`membench.c`](../membench.c#L2284-L2287)).
+The numeric options `-p`, `-s`, `-r`, and `-t` read the leading number of
+their value, ignore any text after it, and read a value without a leading
+number as 0 ([`membench.c`](../membench.c#L2284-L2310)). They handle the
+result as follows:
+
+- `-p` and `-s` exit with code 1 on a value of 0 or less, so `-p abc`
+  exits, while `-p 4x` runs with four threads and `-s 64k` with 64 KiB.
+- `-t` exits with code 1 only on a negative value. A mistyped value such as
+  `-t abc` reads as 0 and runs with no time limit, and `-t 30s` reads as 30.
+- A `-r` value below 1 is set to 1.
+
+An unknown `-o` value or an unknown option exits with code 1.
 
 ## Environment Variables
 
