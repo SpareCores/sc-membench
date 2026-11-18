@@ -1,0 +1,1 @@
+Memory bandwidth and latency benchmark with the Spare Cores membench tool, measuring read, write, and copy bandwidth on all CPUs and single-thread pointer-chasing latency at per-thread buffer sizes from half the L1d cache to four times the L3 cache.
