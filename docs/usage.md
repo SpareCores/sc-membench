@@ -107,9 +107,11 @@ Total runtime: 350.7 seconds
 
 Note that the L3 size on the `Cache` line is the size of one shared L3 cache,
 although the line labels all three sizes "(per core)", and that the "Minimum
-total test size" is printed but not used. The "KB" of the cache sizes is KiB:
-the code divides bytes by 1,024
-([`membench.c`](../membench.c#L979-L982)). The `OpenMP` line is printed whenever
+total test size" is printed but not used. The "KB" of the cache sizes and of
+the minimum test size is KiB, and the "GB" on the `System` line is GiB: the
+code divides bytes by 1,024 and by 1,024³
+([`membench.c`](../membench.c#L979-L982),
+[`membench.c`](../membench.c#L1272-L1274)). The `OpenMP` line is printed whenever
 the bandwidth operations run, and it does not show that the threads are bound:
 they are bound only when `OMP_PROC_BIND` or `OMP_PLACES` is set, as [Thread
 Placement](./limitations.md#thread-placement) describes. See
@@ -366,7 +368,7 @@ docker run --rm --privileged --network host ghcr.io/sparecores/membench:main -Hv
 Production runs this benchmark on every server type except those on the
 blocklist in
 [`inspector_rules.py`](https://github.com/SpareCores/sc-crawler/blob/main/src/sc_crawler/inspector_rules.py),
-which for this benchmark excludes servers with less than 0.9 GB of memory and
+which for this benchmark excludes servers with less than 0.9 GiB of memory and
 `ovh/r3-128`. The image does not enforce a minimum memory size.
 
 The results are published in the
